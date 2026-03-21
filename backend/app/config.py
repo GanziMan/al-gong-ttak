@@ -1,4 +1,7 @@
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
+
+load_dotenv()  # Google SDK 등이 필요로 하는 환경변수를 os.environ에 로드
 
 
 class Settings(BaseSettings):

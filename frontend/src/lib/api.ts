@@ -38,7 +38,7 @@ export const api = {
     if (params?.category) sp.set("category", params.category);
     if (params?.min_score) sp.set("min_score", String(params.min_score));
     const qs = sp.toString();
-    return request<{ disclosures: Disclosure[]; total: number }>(
+    return request<{ disclosures: Disclosure[]; total: number; pending_analysis: number }>(
       `/api/disclosures${qs ? `?${qs}` : ""}`
     );
   },

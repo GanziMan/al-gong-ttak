@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import asyncio
 
+import logging
+
 from fastapi import APIRouter, Query
 
 from app.config import settings
@@ -11,9 +13,12 @@ from app.services.disclosure_filter import get_watchlist_disclosures
 from app.services.analysis_cache import get_cached_analysis, save_analysis
 from app.agents.runner import analyze_disclosure
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 CONCURRENT_ANALYSIS_LIMIT = 5
+_background_tasks: set[asyncio.Task] = set()
 
 
 async def _enrich_one(d: dict) -> dict:
@@ -42,6 +47,22 @@ async def _enrich_one(d: dict) -> dict:
     return d
 
 
+async def _analyze_batch(disclosures: list[dict]) -> None:
+    """백그라운드에서 미분석 공시를 배치 처리한다."""
+    logger.info("Background analysis started for %d disclosures", len(disclosures))
+    sem = asyncio.Semaphore(CONCURRENT_ANALYSIS_LIMIT)
+
+    async def _limited(d: dict) -> None:
+        async with sem:
+            await _enrich_one(d)
+
+    try:
+        await asyncio.gather(*[_limited(d) for d in disclosures])
+        logger.info("Background analysis completed")
+    except Exception:
+        logger.exception("Background analysis failed")
+
+
 @router.get("")
 async def get_disclosures(
     days: int = Query(7, ge=1, le=30),
@@ -51,16 +72,22 @@ async def get_disclosures(
     dart_client = DartClient(api_key=settings.dart_api_key)
     disclosures = await get_watchlist_disclosures(dart_client, days=days)
 
-    # 세마포어로 동시 AI 호출 수 제한하며 병렬 처리
-    sem = asyncio.Semaphore(CONCURRENT_ANALYSIS_LIMIT)
+    # 즉시 반환: 캐시된 분석만 첨부
+    pending = []
+    for d in disclosures:
+        rcept_no = d.get("rcept_no", "")
+        cached = get_cached_analysis(rcept_no) if rcept_no else None
+        d["analysis"] = cached  # None if not cached
+        if cached is None:
+            pending.append(d)
 
-    async def _limited(d: dict) -> dict:
-        async with sem:
-            return await _enrich_one(d)
+    # 미분석 건은 백그라운드 태스크로 처리 (fire-and-forget)
+    if pending:
+        task = asyncio.create_task(_analyze_batch(pending))
+        _background_tasks.add(task)
+        task.add_done_callback(_background_tasks.discard)
 
-    enriched = await asyncio.gather(*[_limited(d) for d in disclosures])
-
-    results = list(enriched)
+    results = list(disclosures)
 
     if category:
         results = [
@@ -73,4 +100,8 @@ async def get_disclosures(
             if d.get("analysis") and d["analysis"].get("importance_score", 0) >= min_score
         ]
 
-    return {"disclosures": results, "total": len(results)}
+    return {
+        "disclosures": results,
+        "total": len(results),
+        "pending_analysis": len(pending),
+    }

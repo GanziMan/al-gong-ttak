@@ -40,7 +40,7 @@ export function DisclosureCard({ disclosure }: DisclosureCardProps) {
               {disclosure.report_nm}
             </h3>
           </div>
-          {analysis && (
+          {analysis ? (
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               <Badge variant="outline" className={cn("text-[10px] font-medium rounded-md", categoryColor[cat])}>
                 {cat}
@@ -49,11 +49,16 @@ export function DisclosureCard({ disclosure }: DisclosureCardProps) {
                 {score}
               </span>
             </div>
+          ) : (
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <div className="h-5 w-12 rounded-md bg-muted animate-pulse" />
+              <div className="h-6 w-8 rounded bg-muted animate-pulse" />
+            </div>
           )}
         </div>
 
         {/* Action item */}
-        {analysis && (
+        {analysis ? (
           <div className="mt-2.5">
             <p className="text-[12px] leading-relaxed text-muted-foreground/70">
               {analysis.action_item}
@@ -77,6 +82,11 @@ export function DisclosureCard({ disclosure }: DisclosureCardProps) {
             >
               {expanded ? "분석 숨기기" : "분석 보기"}
             </button>
+          </div>
+        ) : (
+          <div className="mt-2.5 flex items-center gap-2">
+            <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
+            <span className="text-[11px] text-muted-foreground/50">분석 중...</span>
           </div>
         )}
       </div>

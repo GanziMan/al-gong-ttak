@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { DisclosureFilters } from "@/components/disclosure-filters";
@@ -19,6 +19,8 @@ function DisclosuresContent() {
   const [category, setCategory] = useState("all");
   const [days, setDays] = useState(7);
   const [minScore, setMinScore] = useState(0);
+  const [pendingAnalysis, setPendingAnalysis] = useState(0);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearCorpFilter = useCallback(() => {
     router.replace("/disclosures");
@@ -39,8 +41,8 @@ function DisclosuresContent() {
     if (corpCode) clearCorpFilter();
   }, [corpCode, clearCorpFilter]);
 
-  const fetchDisclosures = useCallback(async () => {
-    setLoading(true);
+  const fetchDisclosures = useCallback(async (isPolling = false) => {
+    if (!isPolling) setLoading(true);
     try {
       const data = await api.getDisclosures({
         days,
@@ -48,17 +50,31 @@ function DisclosuresContent() {
         min_score: minScore || undefined,
       });
       setDisclosures(data.disclosures);
+      setPendingAnalysis(data.pending_analysis);
       setError("");
     } catch {
       setError("공시 데이터를 불러올 수 없습니다. 백엔드 서버를 확인하세요.");
     } finally {
-      setLoading(false);
+      if (!isPolling) setLoading(false);
     }
   }, [days, category, minScore]);
 
   useEffect(() => {
     fetchDisclosures();
   }, [fetchDisclosures]);
+
+  // 미분석 건이 있으면 5초 간격으로 자동 폴링
+  useEffect(() => {
+    if (pendingAnalysis > 0) {
+      pollRef.current = setInterval(() => fetchDisclosures(true), 5000);
+    }
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [pendingAnalysis, fetchDisclosures]);
 
   const filtered = corpCode
     ? disclosures.filter((d) => d.corp_code === corpCode)
@@ -94,6 +110,14 @@ function DisclosuresContent() {
               <p className="text-[12px] text-muted-foreground mt-0.5">
                 관심종목의 AI 분석 공시
               </p>
+              {pendingAnalysis > 0 && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[11px] text-primary font-medium">
+                    AI 분석 중... ({pendingAnalysis}건 남음)
+                  </span>
+                </div>
+              )}
             </>
           )}
         </div>
