@@ -14,10 +14,42 @@ export function SummaryCards({
   bearish,
 }: SummaryCardsProps) {
   const cards = [
-    { label: "WATCHLIST", value: watchlistCount, sub: "stocks", color: "text-primary" },
-    { label: "TODAY", value: todayDisclosures, sub: "filings", color: "text-foreground" },
-    { label: "BULLISH", value: bullish, sub: "filings", color: "text-emerald-400" },
-    { label: "BEARISH", value: bearish, sub: "filings", color: "text-red-400" },
+    {
+      label: "WATCHLIST",
+      value: watchlistCount,
+      sub: "stocks tracked",
+      color: "text-primary",
+      glow: "glow-blue",
+      border: "border-primary/20",
+      icon: "◈",
+    },
+    {
+      label: "TODAY",
+      value: todayDisclosures,
+      sub: "new filings",
+      color: "text-foreground",
+      glow: "",
+      border: "border-border/30",
+      icon: "◉",
+    },
+    {
+      label: "BULLISH",
+      value: bullish,
+      sub: "positive signals",
+      color: "text-emerald-400",
+      glow: "glow-green",
+      border: "border-emerald-500/20",
+      icon: "▲",
+    },
+    {
+      label: "BEARISH",
+      value: bearish,
+      sub: "risk alerts",
+      color: "text-red-400",
+      glow: "glow-red",
+      border: "border-red-500/20",
+      icon: "▼",
+    },
   ];
 
   return (
@@ -25,15 +57,18 @@ export function SummaryCards({
       {cards.map((card) => (
         <div
           key={card.label}
-          className="rounded-lg border border-border/50 bg-card p-4"
+          className={`relative rounded-xl border ${card.border} card-gradient p-4 transition-all hover:scale-[1.02] ${card.glow}`}
         >
-          <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-            {card.label}
-          </p>
-          <p className={`mt-1 text-3xl font-bold font-mono tabular-nums ${card.color}`}>
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+              {card.label}
+            </p>
+            <span className={`text-xs opacity-50 ${card.color}`}>{card.icon}</span>
+          </div>
+          <p className={`mt-2 text-3xl font-bold font-mono tabular-nums tracking-tight ${card.color}`}>
             {card.value}
           </p>
-          <p className="text-xs text-muted-foreground">{card.sub}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground/70">{card.sub}</p>
         </div>
       ))}
     </div>

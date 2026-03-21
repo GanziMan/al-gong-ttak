@@ -71,34 +71,35 @@ export default function SettingsPage() {
 
   if (loading || !settings) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-6">
         <div>
-          <h1 className="text-lg font-bold tracking-tight">Settings</h1>
-          <p className="text-xs text-muted-foreground">Loading...</p>
+          <h1 className="text-xl font-bold tracking-tight">Settings</h1>
+          <p className="text-[12px] text-muted-foreground/60 mt-0.5">Loading configuration...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-lg font-bold tracking-tight">Settings</h1>
-        <p className="text-xs text-muted-foreground">
-          Configure notifications and filters
+        <h1 className="text-xl font-bold tracking-tight">Settings</h1>
+        <p className="text-[12px] text-muted-foreground/60 mt-0.5">
+          Configure notifications and alert filters
         </p>
       </div>
 
       {/* Telegram Section */}
-      <div className="rounded-lg border border-border/50 bg-card">
-        <div className="border-b border-border/50 px-4 py-3">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      <div className="rounded-xl border border-border/30 card-gradient overflow-hidden">
+        <div className="border-b border-border/30 px-4 py-3 flex items-center gap-2">
+          <span className="text-sm">✈</span>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
             Telegram Notifications
           </h2>
         </div>
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="telegram-toggle" className="text-sm">Enable notifications</Label>
+            <Label htmlFor="telegram-toggle" className="text-[13px]">Enable notifications</Label>
             <Switch
               id="telegram-toggle"
               checked={settings.telegram_enabled}
@@ -108,7 +109,7 @@ export default function SettingsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="chat-id" className="text-xs text-muted-foreground">Chat ID</Label>
+            <Label htmlFor="chat-id" className="text-[11px] text-muted-foreground/60">Chat ID</Label>
             <Input
               id="chat-id"
               value={settings.telegram_chat_id}
@@ -116,22 +117,23 @@ export default function SettingsPage() {
                 setSettings({ ...settings, telegram_chat_id: e.target.value })
               }
               placeholder="Enter Telegram Chat ID"
-              className="h-9 bg-muted/30 border-border/50 text-sm font-mono"
+              className="h-9 card-gradient border-border/30 text-sm font-mono rounded-lg"
             />
           </div>
         </div>
       </div>
 
       {/* Alert Filters Section */}
-      <div className="rounded-lg border border-border/50 bg-card">
-        <div className="border-b border-border/50 px-4 py-3">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      <div className="rounded-xl border border-border/30 card-gradient overflow-hidden">
+        <div className="border-b border-border/30 px-4 py-3 flex items-center gap-2">
+          <span className="text-sm">◈</span>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
             Alert Filters
           </h2>
         </div>
         <div className="p-4 space-y-5">
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Alert categories</Label>
+            <Label className="text-[11px] text-muted-foreground/60">Alert categories</Label>
             <div className="flex flex-wrap gap-2">
               {ALL_CATEGORIES.map((cat) => {
                 const active = settings.alert_categories.includes(cat);
@@ -140,10 +142,10 @@ export default function SettingsPage() {
                     key={cat}
                     variant="outline"
                     className={cn(
-                      "cursor-pointer transition-colors text-xs",
+                      "cursor-pointer transition-all text-[11px] rounded-lg",
                       active
-                        ? "bg-primary/20 text-primary border-primary/30"
-                        : "text-muted-foreground border-border/50 hover:border-border"
+                        ? "bg-primary/15 text-primary border-primary/30 hover:bg-primary/20"
+                        : "text-muted-foreground/60 border-border/30 hover:border-border/50 hover:text-muted-foreground"
                     )}
                     onClick={() => toggleCategory(cat)}
                   >
@@ -155,14 +157,14 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Minimum importance score</Label>
+            <Label className="text-[11px] text-muted-foreground/60">Minimum importance score</Label>
             <Select
               value={String(settings.min_importance_score)}
               onValueChange={(v) =>
                 v && setSettings({ ...settings, min_importance_score: Number(v) })
               }
             >
-              <SelectTrigger className="h-9 w-[160px] text-sm bg-muted/30 border-border/50">
+              <SelectTrigger className="h-9 w-[160px] text-sm card-gradient border-border/30 rounded-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -176,14 +178,14 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Disclosure lookback period</Label>
+            <Label className="text-[11px] text-muted-foreground/60">Disclosure lookback period</Label>
             <Select
               value={String(settings.disclosure_days)}
               onValueChange={(v) =>
                 v && setSettings({ ...settings, disclosure_days: Number(v) })
               }
             >
-              <SelectTrigger className="h-9 w-[160px] text-sm bg-muted/30 border-border/50">
+              <SelectTrigger className="h-9 w-[160px] text-sm card-gradient border-border/30 rounded-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -199,7 +201,7 @@ export default function SettingsPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-[12px] text-red-400">
           {error}
         </div>
       )}
@@ -208,12 +210,12 @@ export default function SettingsPage() {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="h-9 text-xs uppercase tracking-wider"
+          className="h-9 text-[11px] uppercase tracking-[0.12em] rounded-lg"
         >
           {saving ? "Saving..." : "Save Settings"}
         </Button>
         {saved && (
-          <span className="text-xs text-emerald-400">Saved successfully</span>
+          <span className="text-[12px] text-emerald-400 font-medium">Saved successfully</span>
         )}
       </div>
     </div>

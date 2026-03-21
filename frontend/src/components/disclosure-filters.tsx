@@ -26,12 +26,12 @@ export function DisclosureFilters({
   onMinScoreChange,
 }: DisclosureFiltersProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mr-1">
+    <div className="flex flex-wrap items-center gap-2.5">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 mr-0.5">
         Filter
       </span>
       <Select value={category} onValueChange={(v) => v && onCategoryChange(v)}>
-        <SelectTrigger className="h-8 w-[130px] text-xs bg-card border-border/50">
+        <SelectTrigger className="h-8 w-[130px] text-xs card-gradient border-border/30 rounded-lg">
           <SelectValue placeholder="Category" />
         </SelectTrigger>
         <SelectContent>
@@ -44,7 +44,7 @@ export function DisclosureFilters({
       </Select>
 
       <Select value={String(days)} onValueChange={(v) => v && onDaysChange(Number(v))}>
-        <SelectTrigger className="h-8 w-[100px] text-xs bg-card border-border/50">
+        <SelectTrigger className="h-8 w-[100px] text-xs card-gradient border-border/30 rounded-lg">
           <SelectValue placeholder="Period" />
         </SelectTrigger>
         <SelectContent>
@@ -57,7 +57,7 @@ export function DisclosureFilters({
       </Select>
 
       <Select value={String(minScore)} onValueChange={(v) => v && onMinScoreChange(Number(v))}>
-        <SelectTrigger className="h-8 w-[120px] text-xs bg-card border-border/50">
+        <SelectTrigger className="h-8 w-[120px] text-xs card-gradient border-border/30 rounded-lg">
           <SelectValue placeholder="Score" />
         </SelectTrigger>
         <SelectContent>

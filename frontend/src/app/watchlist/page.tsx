@@ -50,24 +50,24 @@ export default function WatchlistPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-bold tracking-tight">Watchlist</h1>
-        <p className="text-xs text-muted-foreground">
-          Track and manage your stocks
+        <h1 className="text-xl font-bold tracking-tight">Watchlist</h1>
+        <p className="text-[12px] text-muted-foreground/60 mt-0.5">
+          Track and manage your stock portfolio
         </p>
       </div>
 
       <StockSearch onSelect={handleAdd} />
 
       {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-[12px] text-red-400">
           {error}
         </div>
       )}
 
       {loading ? (
-        <Skeleton className="h-48 rounded-lg" />
+        <Skeleton className="h-52 rounded-xl" />
       ) : (
         <WatchlistTable items={watchlist} onRemove={handleRemove} />
       )}

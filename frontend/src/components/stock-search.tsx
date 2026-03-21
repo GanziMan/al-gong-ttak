@@ -50,23 +50,28 @@ export function StockSearch({ onSelect }: StockSearchProps) {
 
   return (
     <div ref={ref} className="relative w-full max-w-md">
-      <Input
-        placeholder="Search stocks... (e.g. Samsung)"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="h-9 bg-card border-border/50 text-sm placeholder:text-muted-foreground/50"
-      />
-      {loading && (
-        <div className="absolute right-3 top-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-          Searching...
-        </div>
-      )}
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 text-sm">
+          ⌕
+        </span>
+        <Input
+          placeholder="Search stocks... (e.g. Samsung)"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="h-10 pl-8 card-gradient border-border/30 text-sm placeholder:text-muted-foreground/40 rounded-xl focus:border-primary/40 transition-colors"
+        />
+        {loading && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-wider text-primary/60 font-medium">
+            Searching...
+          </div>
+        )}
+      </div>
       {open && (
-        <div className="absolute z-10 mt-1 w-full rounded-lg border border-border/50 bg-popover shadow-xl overflow-hidden">
+        <div className="absolute z-10 mt-1.5 w-full rounded-xl border border-border/30 bg-popover/95 backdrop-blur-xl shadow-2xl overflow-hidden">
           {results.map((corp) => (
             <button
               key={corp.corp_code}
-              className="flex w-full items-center justify-between px-3 py-2.5 text-sm hover:bg-accent/50 transition-colors border-b border-border/20 last:border-0"
+              className="flex w-full items-center justify-between px-4 py-3 text-sm hover:bg-accent/30 transition-all border-b border-border/15 last:border-0"
               onClick={() => {
                 onSelect(corp);
                 setQuery("");
@@ -74,7 +79,7 @@ export function StockSearch({ onSelect }: StockSearchProps) {
               }}
             >
               <span className="font-medium text-foreground">{corp.corp_name}</span>
-              <span className="font-mono text-xs text-muted-foreground">{corp.stock_code}</span>
+              <span className="font-mono text-[11px] text-muted-foreground/50">{corp.stock_code}</span>
             </button>
           ))}
         </div>

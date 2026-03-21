@@ -30,33 +30,33 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-6">
         <div>
-          <h1 className="text-lg font-bold tracking-tight">Dashboard</h1>
-          <p className="text-xs text-muted-foreground">Market disclosure overview</p>
+          <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-[12px] text-muted-foreground/60 mt-0.5">Real-time market disclosure intelligence</p>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-lg" />
+            <Skeleton key={i} className="h-[100px] rounded-xl" />
           ))}
         </div>
-        <div className="grid gap-5 lg:grid-cols-2">
-          <Skeleton className="h-64 rounded-lg" />
-          <Skeleton className="h-64 rounded-lg" />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Skeleton className="h-72 rounded-xl" />
+          <Skeleton className="h-72 rounded-xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-bold tracking-tight">Dashboard</h1>
-        <p className="text-xs text-muted-foreground">Market disclosure overview</p>
+        <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-[12px] text-muted-foreground/60 mt-0.5">Real-time market disclosure intelligence</p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-[12px] text-red-400">
           {error}
         </div>
       )}
@@ -68,7 +68,7 @@ export default function DashboardPage() {
         bearish={data?.bearish ?? 0}
       />
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <ImportantDisclosures
           disclosures={data?.important_disclosures ?? []}
         />

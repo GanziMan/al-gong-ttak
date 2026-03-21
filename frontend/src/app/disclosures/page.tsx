@@ -36,11 +36,11 @@ export default function DisclosuresPage() {
   }, [fetchDisclosures]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-lg font-bold tracking-tight">Disclosures</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="text-xl font-bold tracking-tight">Disclosures</h1>
+          <p className="text-[12px] text-muted-foreground/60 mt-0.5">
             AI-analyzed filings from your watchlist
           </p>
         </div>
@@ -55,20 +55,20 @@ export default function DisclosuresPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-[12px] text-red-400">
           {error}
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-lg" />
+            <Skeleton key={i} className="h-28 rounded-xl" />
           ))
         ) : disclosures.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/50 py-16 text-center">
-            <p className="text-sm text-muted-foreground">No filings found</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">
+          <div className="rounded-xl border border-dashed border-border/30 py-16 text-center">
+            <p className="text-sm text-muted-foreground/60">No filings found</p>
+            <p className="mt-1.5 text-[11px] text-muted-foreground/40">
               Add stocks to your watchlist or adjust filters
             </p>
           </div>
@@ -80,7 +80,7 @@ export default function DisclosuresPage() {
       </div>
 
       {!loading && disclosures.length > 0 && (
-        <p className="text-center text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+        <p className="text-center text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground/40">
           {disclosures.length} filing{disclosures.length !== 1 ? "s" : ""} total
         </p>
       )}
