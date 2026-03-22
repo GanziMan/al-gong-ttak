@@ -25,6 +25,21 @@ _background_tasks: set[asyncio.Task] = set()
 _analyzing_rcept_nos: set[str] = set()  # 현재 분석 중인 공시 번호
 
 
+async def _fetch_document_text(rcept_no: str) -> str:
+    """공시 본문 텍스트를 DART에서 가져온다."""
+    if not rcept_no:
+        return ""
+    try:
+        dart_client = DartClient(api_key=settings.dart_api_key)
+        text = await dart_client.get_document_text(rcept_no)
+        if text:
+            logger.info("Fetched document text for %s (%d chars)", rcept_no, len(text))
+        return text
+    except Exception:
+        logger.warning("Failed to fetch document for %s", rcept_no)
+        return ""
+
+
 async def _enrich_one(d: dict) -> dict:
     """단일 공시에 AI 분석 결과를 붙인다 (캐시 우선)."""
     rcept_no = d.get("rcept_no", "")
@@ -36,7 +51,12 @@ async def _enrich_one(d: dict) -> dict:
 
     try:
         title = d.get("report_nm", "")
-        content = f"{d.get('corp_name', '')} {title} (접수일: {d.get('rcept_dt', '')})"
+        # 공시 본문 가져오기
+        doc_text = await _fetch_document_text(rcept_no)
+        if doc_text:
+            content = doc_text
+        else:
+            content = f"{d.get('corp_name', '')} {title} (접수일: {d.get('rcept_dt', '')})"
         analysis = await analyze_disclosure(
             corp_name=d.get("corp_name", ""),
             title=title,
