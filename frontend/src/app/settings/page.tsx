@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Send, SlidersHorizontal, Tag, X } from "lucide-react";
+import { LogOut, Send, SlidersHorizontal, Tag, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -17,10 +17,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { api, AppSettings } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth-provider";
 
 const ALL_CATEGORIES = ["호재", "악재", "중립", "단순정보"];
 
 export default function SettingsPage() {
+  const { user, isLoggedIn, logout } = useAuth();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -283,6 +285,32 @@ export default function SettingsPage() {
           {saving ? "저장 중..." : "설정 저장"}
         </Button>
       </div>
+
+      {/* Account Section */}
+      {isLoggedIn && (
+        <div className="glass-card rounded-2xl overflow-hidden">
+          <div className="border-b border-border/30 px-4 py-3 flex items-center gap-2">
+            <LogOut className="h-4 w-4 text-primary/60" />
+            <h2 className="text-[12px] font-semibold text-muted-foreground">
+              계정
+            </h2>
+          </div>
+          <div className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[13px] font-medium text-foreground">{user?.nickname}</p>
+              <p className="text-[11px] text-muted-foreground">카카오 로그인</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={logout}
+              className="h-8 text-[12px] rounded-xl text-muted-foreground hover:text-destructive hover:border-destructive/30"
+            >
+              로그아웃
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

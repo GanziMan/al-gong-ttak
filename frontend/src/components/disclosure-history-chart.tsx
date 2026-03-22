@@ -21,6 +21,22 @@ const ResponsiveContainer = dynamic(
   { ssr: false }
 );
 
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color?: string }>; label?: string }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border border-border/50 bg-background/95 backdrop-blur-sm px-3 py-2.5 shadow-lg">
+      <p className="text-[11px] font-medium text-foreground/70 mb-1.5">{label}</p>
+      {payload.map((p) => (
+        <div key={p.name} className="flex items-center gap-2 py-0.5">
+          <div className="h-2 w-2 rounded-full shrink-0" style={{ background: p.color }} />
+          <span className="text-[11px] text-muted-foreground">{p.name}</span>
+          <span className="text-[11px] font-semibold text-foreground ml-auto tabular-nums">{p.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const PERIOD_OPTIONS = [
   { label: "7일", value: 7 },
   { label: "14일", value: 14 },
@@ -81,17 +97,9 @@ export function DisclosureHistoryChart() {
               <XAxis dataKey="dateLabel" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
               <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} width={30} />
               <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} width={30} />
-              <Tooltip
-                contentStyle={{
-                  fontSize: 11,
-                  borderRadius: 12,
-                  border: "1px solid hsl(var(--border))",
-                  background: "hsl(var(--card))",
-                }}
-                labelFormatter={(label) => `날짜: ${label}`}
-              />
-              <Bar yAxisId="left" dataKey="count" name="공시 수" fill="#a5b4fc" radius={[4, 4, 0, 0]} />
-              <Line yAxisId="right" type="monotone" dataKey="avg_score" name="평균 점수" stroke="#6366f1" strokeWidth={2} dot={false} />
+              <Tooltip content={<CustomTooltip />} cursor={false} />
+              <Bar yAxisId="left" dataKey="count" name="공시 수" fill="#94A3B8" radius={[4, 4, 0, 0]} />
+              <Line yAxisId="right" type="monotone" dataKey="avg_score" name="평균 점수" stroke="#F59E0B" strokeWidth={2} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
         )}

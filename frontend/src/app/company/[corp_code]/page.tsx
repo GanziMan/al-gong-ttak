@@ -26,12 +26,12 @@ export default function CompanyDetailPage() {
   const [financials, setFinancials] = useState<FinancialYear[] | null>(null);
   const [dividends, setDividends] = useState<DividendYear[] | null>(null);
   const [shareholders, setShareholders] = useState<ShareholderInfo[] | null>(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!corpCode) return;
 
-    // 기업정보 + 재무 + 배당 + 대주주를 각각 독립 로딩
+    // summary 호출 (백엔드에서 병렬 처리) + 캐시 지원
     fetchWithRevalidate<{ company: CompanyInfo; financials: FinancialYear[]; dividends: DividendYear[]; shareholders: ShareholderInfo[] }>(
       `/api/company/${corpCode}/summary`,
       (fresh) => {
@@ -50,13 +50,30 @@ export default function CompanyDetailPage() {
           setShareholders(cached.shareholders);
         }
       })
-      .catch(() => setError("기업 정보를 불러올 수 없습니다."));
+      .catch(() => {
+        // summary 실패 → 개별 API 병렬 폴백
+        Promise.all([
+          api.getCompanyFinancials(corpCode)
+            .then((r) => setFinancials(r.financials))
+            .catch(() => setFinancials([])),
+          api.getCompanyDividends(corpCode)
+            .then((r) => setDividends(r.dividends))
+            .catch(() => setDividends([])),
+          api.getCompanyShareholders(corpCode)
+            .then((r) => setShareholders(r.shareholders))
+            .catch(() => setShareholders([])),
+        ]).then(() => {
+          // 개별 호출도 전부 빈 데이터면 에러 표시
+          setError((prev) => prev);
+        });
+        setError(true);
+      });
   }, [corpCode]);
 
-  if (error) {
+  if (error && !company && !financials && !dividends && !shareholders) {
     return (
       <div className="glass-card rounded-2xl p-8 text-center">
-        <p className="text-sm text-muted-foreground">{error}</p>
+        <p className="text-sm text-muted-foreground">기업 정보를 불러올 수 없습니다.</p>
         <Link href="/watchlist" className="mt-3 inline-block">
           <Button variant="outline" size="sm">관심종목으로 돌아가기</Button>
         </Link>

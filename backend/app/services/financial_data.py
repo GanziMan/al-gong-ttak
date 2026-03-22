@@ -147,7 +147,7 @@ async def get_dividend_history(dart_client: DartClient, corp_code: str, years: i
             logger.warning("Failed to fetch dividends for %s/%s", corp_code, bsns_year)
             return {"year": bsns_year, "dividends": []}
 
-    return results
+    return await asyncio.gather(*[_fetch_one(y) for y in year_list])
 
 
 async def get_shareholders(dart_client: DartClient, corp_code: str) -> list[dict]:

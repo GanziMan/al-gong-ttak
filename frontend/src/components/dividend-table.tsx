@@ -43,7 +43,7 @@ export function DividendTable({ data }: DividendTableProps) {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.year} className="border-b border-border/10 hover:bg-accent/30 transition-colors">
+                  <tr key={r.year} className="border-b border-border/10 transition-colors">
                     <td className="py-2.5 pr-4 font-semibold text-foreground">{r.year}</td>
                     <td className="py-2.5 px-4 text-right tabular-nums text-foreground/80">{r.dps}원</td>
                     <td className="py-2.5 px-4 text-right tabular-nums text-foreground/80">{r.yieldPct}%</td>

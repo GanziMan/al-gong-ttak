@@ -162,6 +162,11 @@
   * {
     -webkit-tap-highlight-color: transparent;
   }
+  /* Recharts 클릭 시 focus outline 제거 */
+  .recharts-surface:focus,
+  .recharts-wrapper:focus {
+    outline: none;
+  }
 }
 
 /* Glass card */

@@ -32,7 +32,7 @@ export function ShareholderTable({ data }: ShareholderTableProps) {
               </thead>
               <tbody>
                 {data.map((s, i) => (
-                  <tr key={i} className="border-b border-border/10 hover:bg-accent/30 transition-colors">
+                  <tr key={i} className="border-b border-border/10 transition-colors">
                     <td className="py-2.5 pr-4 font-semibold text-foreground">{s.name}</td>
                     <td className="py-2.5 px-4 text-muted-foreground">{s.relation}</td>
                     <td className="py-2.5 px-4 text-right tabular-nums text-foreground/80">{s.shares_raw}</td>

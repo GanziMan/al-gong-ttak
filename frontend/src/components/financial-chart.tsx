@@ -15,6 +15,28 @@ const ResponsiveContainer = dynamic(
   { ssr: false }
 );
 
+const COLORS: Record<string, string> = {
+  "매출액": "#94A3B8",
+  "영업이익": "#F59E0B",
+  "당기순이익": "#10B981",
+};
+
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number }>; label?: string }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border border-border/50 bg-background/95 backdrop-blur-sm px-3 py-2.5 shadow-lg">
+      <p className="text-[11px] font-medium text-foreground/70 mb-1.5">{label}년</p>
+      {payload.map((p) => (
+        <div key={p.name} className="flex items-center gap-2 py-0.5">
+          <div className="h-2 w-2 rounded-full shrink-0" style={{ background: COLORS[p.name] }} />
+          <span className="text-[11px] text-muted-foreground">{p.name}</span>
+          <span className="text-[11px] font-semibold text-foreground ml-auto tabular-nums">{formatBillion(p.value)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function formatBillion(value: number): string {
   if (value === 0) return "0";
   const billion = value / 100000000;
@@ -62,19 +84,11 @@ export function FinancialChart({ data }: FinancialChartProps) {
                 width={50}
                 tickFormatter={formatBillion}
               />
-              <Tooltip
-                contentStyle={{
-                  fontSize: 11,
-                  borderRadius: 12,
-                  border: "1px solid hsl(var(--border))",
-                  background: "hsl(var(--card))",
-                }}
-                formatter={(value) => formatBillion(Number(value ?? 0))}
-              />
+              <Tooltip content={<CustomTooltip />} cursor={false} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="매출액" fill="#818cf8" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="영업이익" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="당기순이익" fill="#4338ca" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="매출액" fill="#94A3B8" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="영업이익" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="당기순이익" fill="#10B981" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
