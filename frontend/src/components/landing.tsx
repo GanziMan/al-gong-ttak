@@ -74,13 +74,6 @@ export function Landing() {
         <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-primary/8 blur-[100px]" />
 
         <div className="relative">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 mb-6">
-            <Zap className="h-3.5 w-3.5 text-primary" />
-            <span className="text-[11px] font-semibold text-primary tracking-wide">
-              AI-POWERED DART ANALYSIS
-            </span>
-          </div>
-
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1]">
             <span className="text-foreground">공시,</span>
             <br />
@@ -100,7 +93,7 @@ export function Landing() {
           <div className="mt-10 flex flex-col sm:flex-row items-center gap-3">
             <a
               href={`${API_BASE}/api/auth/kakao/login`}
-              className="inline-flex items-center justify-center gap-2.5 rounded-2xl px-8 py-3.5 text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-yellow-500/20"
+              className="mx-auto inline-flex items-center justify-center gap-2.5 rounded-2xl px-8 py-3.5 text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-yellow-500/20"
               style={{ backgroundColor: "#FEE500", color: "#000000" }}
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -166,8 +159,12 @@ export function Landing() {
                 <TrendingUp className="h-4 w-4 text-emerald-500" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-foreground">삼성전자</p>
-                <p className="text-[9px] text-emerald-500 font-semibold">호재 92점</p>
+                <p className="text-[10px] font-bold text-foreground">
+                  삼성전자
+                </p>
+                <p className="text-[9px] text-emerald-500 font-semibold">
+                  호재 92점
+                </p>
               </div>
             </div>
           </div>
@@ -178,7 +175,9 @@ export function Landing() {
                 <BrainCircuit className="h-4 w-4 text-violet-500" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-foreground">AI 분석 완료</p>
+                <p className="text-[10px] font-bold text-foreground">
+                  AI 분석 완료
+                </p>
                 <p className="text-[9px] text-muted-foreground">12건 처리됨</p>
               </div>
             </div>
@@ -203,7 +202,9 @@ export function Landing() {
               key={f.title}
               className="glass-card rounded-2xl p-5 transition-all hover:scale-[1.02] hover:shadow-lg group"
             >
-              <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${f.bg} mb-4 transition-transform group-hover:scale-110`}>
+              <div
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${f.bg} mb-4 transition-transform group-hover:scale-110`}
+              >
                 <f.icon className={`h-5 w-5 ${f.color}`} />
               </div>
               <h3 className="text-sm font-bold text-foreground">{f.title}</h3>
@@ -231,10 +232,14 @@ export function Landing() {
             <div key={s.num} className="flex items-center gap-4">
               <div className="glass-card rounded-2xl p-6 text-center w-52">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 mb-3">
-                  <span className="text-lg font-black text-primary">{s.num}</span>
+                  <span className="text-lg font-black text-primary">
+                    {s.num}
+                  </span>
                 </div>
                 <h3 className="text-sm font-bold text-foreground">{s.title}</h3>
-                <p className="mt-1 text-[11px] text-muted-foreground">{s.desc}</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {s.desc}
+                </p>
               </div>
               {i < steps.length - 1 && (
                 <div className="hidden sm:block text-muted-foreground/30 text-2xl font-light">
