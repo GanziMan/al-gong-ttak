@@ -51,7 +51,7 @@ export function Nav() {
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));
     fetchCount();
-    const interval = setInterval(fetchCount, 120_000);
+    const interval = setInterval(fetchCount, 300_000);
     const onVisibility = () => {
       if (document.visibilityState === "visible") fetchCount();
     };
@@ -76,9 +76,6 @@ export function Nav() {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-10">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="h-6 w-6 rounded-md bg-primary flex items-center justify-center">
-                <span className="text-[10px] font-black text-primary-foreground">A</span>
-              </div>
               <span className="text-sm font-bold tracking-wide text-foreground group-hover:text-primary transition-colors">
                 ALZALTTAK
               </span>
@@ -92,7 +89,7 @@ export function Nav() {
                     "relative px-3.5 py-2 text-[13px] font-medium transition-colors rounded-lg",
                     pathname === link.href
                       ? "text-primary bg-primary/5"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent",
                   )}
                 >
                   {link.label}
@@ -131,14 +128,21 @@ export function Nav() {
               className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label="테마 전환"
             >
-              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {isDark ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
             </button>
           </div>
         </div>
       </header>
 
       {/* Mobile bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden glass-nav border-t" style={{ paddingBottom: "var(--safe-area-bottom)" }}>
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 sm:hidden glass-nav border-t"
+        style={{ paddingBottom: "var(--safe-area-bottom)" }}
+      >
         <div className="flex items-stretch">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -149,13 +153,16 @@ export function Nav() {
                 href={tab.href}
                 className={cn(
                   "relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[3.5rem] transition-colors",
-                  active
-                    ? "text-primary"
-                    : "text-muted-foreground"
+                  active ? "text-primary" : "text-muted-foreground",
                 )}
               >
                 <Icon className={cn("h-5 w-5", active && "stroke-[2.5px]")} />
-                <span className={cn("text-[10px]", active ? "font-semibold" : "font-medium")}>
+                <span
+                  className={cn(
+                    "text-[10px]",
+                    active ? "font-semibold" : "font-medium",
+                  )}
+                >
                   {tab.label}
                 </span>
                 {tab.href === "/disclosures" && badgeCount > 0 && (

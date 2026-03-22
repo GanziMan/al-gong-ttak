@@ -8,7 +8,7 @@ import { DisclosureFilters } from "@/components/disclosure-filters";
 import { DisclosureCard } from "@/components/disclosure-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, Bookmark, Disclosure } from "@/lib/api";
+import { api, fetchWithRevalidate, Bookmark, Disclosure } from "@/lib/api";
 
 function DisclosuresContent() {
   const searchParams = useSearchParams();
@@ -51,20 +51,48 @@ function DisclosuresContent() {
   }, [category, days, updateURL]);
 
   const fetchDisclosures = useCallback(async (isPolling = false) => {
-    if (!isPolling) setLoading(true);
-    try {
-      const data = await api.getDisclosures({
-        days,
-        category: category === "all" ? undefined : category,
-        min_score: minScore || undefined,
-      });
-      setDisclosures(data.disclosures);
-      setPendingAnalysis(data.pending_analysis);
-      setError("");
-    } catch {
-      setError("공시 데이터를 불러올 수 없습니다. 백엔드 서버를 확인하세요.");
-    } finally {
-      if (!isPolling) setLoading(false);
+    if (!isPolling) {
+      // 첫 로딩 시 캐시에서 즉시 표시
+      const sp = new URLSearchParams();
+      if (days !== 7) sp.set("days", String(days));
+      if (category !== "all") sp.set("category", category);
+      if (minScore > 0) sp.set("min_score", String(minScore));
+      const qs = sp.toString();
+      const path = `/api/disclosures${qs ? `?${qs}` : ""}`;
+
+      try {
+        const cached = await fetchWithRevalidate<{ disclosures: Disclosure[]; total: number; pending_analysis: number }>(
+          path,
+          (fresh) => {
+            setDisclosures(fresh.disclosures);
+            setPendingAnalysis(fresh.pending_analysis);
+          },
+          `disclosures_${days}_${category}_${minScore}`,
+        );
+        if (cached) {
+          setDisclosures(cached.disclosures);
+          setPendingAnalysis(cached.pending_analysis);
+        }
+        setError("");
+      } catch {
+        setError("공시 데이터를 불러올 수 없습니다. 백엔드 서버를 확인하세요.");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // 폴링 시에는 직접 fetch
+      try {
+        const data = await api.getDisclosures({
+          days,
+          category: category === "all" ? undefined : category,
+          min_score: minScore || undefined,
+        });
+        setDisclosures(data.disclosures);
+        setPendingAnalysis(data.pending_analysis);
+        setError("");
+      } catch {
+        // 폴링 실패는 무시
+      }
     }
   }, [days, category, minScore]);
 

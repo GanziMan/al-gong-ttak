@@ -1,6 +1,7 @@
 """대시보드 집계 API"""
 from __future__ import annotations
 
+import asyncio
 from collections import defaultdict
 
 from fastapi import APIRouter, Query, Depends
@@ -16,6 +17,19 @@ from app.services.analysis_cache import get_cached_analysis
 router = APIRouter()
 
 
+async def _attach_analyses(disclosures: list[dict]) -> None:
+    """공시 목록에 캐시된 분석 결과를 병렬로 붙인다."""
+    async def _get(rcept_no: str):
+        if not rcept_no:
+            return None
+        return await get_cached_analysis(rcept_no)
+
+    results = await asyncio.gather(*[_get(d.get("rcept_no", "")) for d in disclosures])
+    for d, cached in zip(disclosures, results):
+        if cached:
+            d["analysis"] = cached
+
+
 @router.get("/summary")
 async def get_summary(user: User = Depends(get_current_user)):
     watchlist = await load_watchlist(user.id)
@@ -23,15 +37,15 @@ async def get_summary(user: User = Depends(get_current_user)):
 
     disclosures = await get_watchlist_disclosures(dart_client, days=7, watchlist=watchlist) if watchlist else []
 
+    await _attach_analyses(disclosures)
+
     bullish = 0
     bearish = 0
     important = []
 
     for d in disclosures:
-        rcept_no = d.get("rcept_no", "")
-        cached = (await get_cached_analysis(rcept_no)) if rcept_no else None
+        cached = d.get("analysis")
         if cached:
-            d["analysis"] = cached
             cat = cached.get("category", "")
             score = cached.get("importance_score", 0)
             if cat == "호재":
@@ -60,11 +74,7 @@ async def get_history(days: int = Query(30, ge=1, le=90), user: User = Depends(g
     dart_client = DartClient(api_key=settings.dart_api_key)
     disclosures = await get_watchlist_disclosures(dart_client, days=days, watchlist=watchlist)
 
-    for d in disclosures:
-        rcept_no = d.get("rcept_no", "")
-        cached = (await get_cached_analysis(rcept_no)) if rcept_no else None
-        if cached:
-            d["analysis"] = cached
+    await _attach_analyses(disclosures)
 
     by_date: dict[str, list[dict]] = defaultdict(list)
     for d in disclosures:

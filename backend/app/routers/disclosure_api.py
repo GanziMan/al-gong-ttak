@@ -131,10 +131,16 @@ async def get_disclosures(
     dart_client = DartClient(api_key=settings.dart_api_key)
     disclosures = await get_watchlist_disclosures(dart_client, days=days, user_id=user.id)
 
+    # 분석 캐시를 병렬로 조회
+    async def _get_analysis(rcept_no: str):
+        if not rcept_no:
+            return None
+        return await get_cached_analysis(rcept_no)
+
+    cached_results = await asyncio.gather(*[_get_analysis(d.get("rcept_no", "")) for d in disclosures])
+
     pending = []
-    for d in disclosures:
-        rcept_no = d.get("rcept_no", "")
-        cached = (await get_cached_analysis(rcept_no)) if rcept_no else None
+    for d, cached in zip(disclosures, cached_results):
         d["analysis"] = cached
         if cached is None:
             pending.append(d)
