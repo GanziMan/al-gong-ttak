@@ -14,7 +14,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
   if (res.status === 401) {
     removeToken();
-    window.location.href = "/login";
+    const path = window.location.pathname;
+    if (path !== "/login" && !path.startsWith("/auth/")) {
+      window.location.href = "/login";
+    }
     throw new Error("Unauthorized");
   }
   if (!res.ok) {

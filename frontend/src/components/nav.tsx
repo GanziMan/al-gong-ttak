@@ -37,6 +37,7 @@ export function Nav() {
 
   const fetchCount = useCallback(async () => {
     try {
+      if (!isLoggedIn) return;
       if (document.visibilityState !== "visible") return;
       const since = localStorage.getItem("disclosures_last_seen") || "";
       if (!since) return;
@@ -45,7 +46,7 @@ export function Nav() {
     } catch {
       // silent
     }
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));
