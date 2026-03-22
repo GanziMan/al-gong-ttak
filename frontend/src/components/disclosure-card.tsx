@@ -53,6 +53,7 @@ export function DisclosureCard({ disclosure, isBookmarked, onToggleBookmark }: D
             <h3 className="text-[13px] font-medium leading-snug text-foreground/85">
               <a
                 href={`https://dart.fss.or.kr/dsaf001/main.do?rcept_no=${disclosure.rcept_no}`}
+                referrerPolicy="no-referrer"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group/link inline-flex items-center gap-1 hover:text-primary transition-colors"
@@ -145,6 +146,7 @@ export function DisclosureCard({ disclosure, isBookmarked, onToggleBookmark }: D
                             </div>
                             <a
                               href={`https://dart.fss.or.kr/dsaf001/main.do?rcept_no=${s.rcept_no}`}
+                              referrerPolicy="no-referrer"
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-[11px] text-foreground/70 hover:text-primary transition-colors line-clamp-1"
