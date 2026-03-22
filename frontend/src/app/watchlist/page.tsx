@@ -32,6 +32,22 @@ export default function WatchlistPage() {
   }, [fetchWatchlist]);
 
   async function handleAdd(corp: Corp) {
+    // 이미 있으면 무시
+    if (watchlist.some((w) => w.corp_code === corp.corp_code)) {
+      toast.info(`${corp.corp_name}은(는) 이미 추가되어 있습니다.`);
+      return;
+    }
+
+    // 낙관적 업데이트
+    const optimistic: WatchlistItem = {
+      corp_code: corp.corp_code,
+      corp_name: corp.corp_name,
+      stock_code: corp.stock_code,
+    };
+    const prev = watchlist;
+    setWatchlist([...prev, optimistic]);
+    toast.success(`${corp.corp_name} 추가됨`);
+
     try {
       const data = await api.addToWatchlist({
         corp_code: corp.corp_code,
@@ -39,19 +55,27 @@ export default function WatchlistPage() {
         stock_code: corp.stock_code,
       });
       setWatchlist(data.watchlist);
-      toast.success(`${corp.corp_name} 추가됨`);
     } catch {
+      // 실패 시 롤백
+      setWatchlist(prev);
       toast.error("종목 추가에 실패했습니다.");
     }
   }
 
   async function handleRemove(corpCode: string) {
     const name = watchlist.find((w) => w.corp_code === corpCode)?.corp_name ?? corpCode;
+
+    // 낙관적 업데이트
+    const prev = watchlist;
+    setWatchlist(prev.filter((w) => w.corp_code !== corpCode));
+    toast.success(`${name} 삭제됨`);
+
     try {
       const data = await api.removeFromWatchlist(corpCode);
       setWatchlist(data.watchlist);
-      toast.success(`${name} 삭제됨`);
     } catch {
+      // 실패 시 롤백
+      setWatchlist(prev);
       toast.error("종목 삭제에 실패했습니다.");
     }
   }
