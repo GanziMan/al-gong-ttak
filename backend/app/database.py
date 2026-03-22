@@ -15,7 +15,12 @@ elif _url.startswith("postgresql://"):
 _debug_url = _url.split("@")[-1] if "@" in _url else _url
 logger.info("Connecting to DB host: %s", _debug_url)
 
-engine = create_async_engine(_url, echo=False, pool_pre_ping=True)
+engine = create_async_engine(
+    _url,
+    echo=False,
+    pool_pre_ping=True,
+    connect_args={"prepared_statement_cache_size": 0},
+)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
