@@ -22,6 +22,7 @@ router = APIRouter()
 
 CONCURRENT_ANALYSIS_LIMIT = 5
 _background_tasks: set[asyncio.Task] = set()
+_analyzing_rcept_nos: set[str] = set()  # 현재 분석 중인 공시 번호
 
 
 async def _enrich_one(d: dict) -> dict:
@@ -70,7 +71,16 @@ async def _enrich_one(d: dict) -> dict:
 
 async def _analyze_batch(disclosures: list[dict], user_id: int) -> None:
     """백그라운드에서 미분석 공시를 배치 처리한다."""
-    logger.info("Background analysis started for %d disclosures", len(disclosures))
+    # 이미 분석 중인 공시 제외
+    to_analyze = [d for d in disclosures if d.get("rcept_no", "") not in _analyzing_rcept_nos]
+    if not to_analyze:
+        return
+
+    rcept_nos = {d.get("rcept_no", "") for d in to_analyze}
+    _analyzing_rcept_nos.update(rcept_nos)
+    logger.info("Background analysis started for %d disclosures (skipped %d in-progress)",
+                len(to_analyze), len(disclosures) - len(to_analyze))
+
     sem = asyncio.Semaphore(CONCURRENT_ANALYSIS_LIMIT)
 
     user_settings = await load_settings(user_id)
@@ -80,31 +90,35 @@ async def _analyze_batch(disclosures: list[dict], user_id: int) -> None:
     tg_min_score = user_settings.get("min_importance_score", 0)
 
     async def _limited(d: dict) -> None:
-        async with sem:
-            await _enrich_one(d)
-            analysis = d.get("analysis")
-            if (
-                tg_enabled
-                and tg_chat_id
-                and settings.telegram_bot_token
-                and analysis
-            ):
-                cat = analysis.get("category", "")
-                score = analysis.get("importance_score", 0)
-                if cat in tg_categories and score >= tg_min_score:
-                    msg = format_disclosure_alert(
-                        corp_name=d.get("corp_name", ""),
-                        title=d.get("report_nm", ""),
-                        category=cat,
-                        importance=score,
-                        summary=analysis.get("summary", ""),
-                        action_item=analysis.get("action_item", ""),
-                        rcept_no=d.get("rcept_no", ""),
-                    )
-                    await send_alert(settings.telegram_bot_token, tg_chat_id, msg)
+        rcept_no = d.get("rcept_no", "")
+        try:
+            async with sem:
+                await _enrich_one(d)
+                analysis = d.get("analysis")
+                if (
+                    tg_enabled
+                    and tg_chat_id
+                    and settings.telegram_bot_token
+                    and analysis
+                ):
+                    cat = analysis.get("category", "")
+                    score = analysis.get("importance_score", 0)
+                    if cat in tg_categories and score >= tg_min_score:
+                        msg = format_disclosure_alert(
+                            corp_name=d.get("corp_name", ""),
+                            title=d.get("report_nm", ""),
+                            category=cat,
+                            importance=score,
+                            summary=analysis.get("summary", ""),
+                            action_item=analysis.get("action_item", ""),
+                            rcept_no=d.get("rcept_no", ""),
+                        )
+                        await send_alert(settings.telegram_bot_token, tg_chat_id, msg)
+        finally:
+            _analyzing_rcept_nos.discard(rcept_no)
 
     try:
-        await asyncio.gather(*[_limited(d) for d in disclosures])
+        await asyncio.gather(*[_limited(d) for d in to_analyze])
         logger.info("Background analysis completed")
     except Exception:
         logger.exception("Background analysis failed")
