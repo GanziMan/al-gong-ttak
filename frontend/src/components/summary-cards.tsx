@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Star, FileText, TrendingUp, TrendingDown } from "lucide-react";
 
 interface SummaryCardsProps {
@@ -23,6 +24,7 @@ export function SummaryCards({
       color: "text-primary",
       icon: Star,
       iconBg: "bg-primary/10 text-primary",
+      href: "/watchlist",
     },
     {
       label: "오늘",
@@ -31,6 +33,7 @@ export function SummaryCards({
       color: "text-foreground",
       icon: FileText,
       iconBg: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      href: "/disclosures",
     },
     {
       label: "호재",
@@ -39,6 +42,7 @@ export function SummaryCards({
       color: "text-emerald-600 dark:text-emerald-400",
       icon: TrendingUp,
       iconBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      href: "/disclosures?category=호재",
     },
     {
       label: "악재",
@@ -47,6 +51,7 @@ export function SummaryCards({
       color: "text-red-600 dark:text-red-400",
       icon: TrendingDown,
       iconBg: "bg-red-500/10 text-red-600 dark:text-red-400",
+      href: "/disclosures?category=악재",
     },
   ];
 
@@ -55,9 +60,10 @@ export function SummaryCards({
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <div
+          <Link
             key={card.label}
-            className="glass-card rounded-2xl p-4 transition-transform sm:hover:scale-[1.02] hover:shadow-md"
+            href={card.href}
+            className="glass-card rounded-2xl p-4 transition-transform sm:hover:scale-[1.02] hover:shadow-md cursor-pointer"
           >
             <div className="flex items-center justify-between mb-2">
               <p className="text-[11px] font-medium text-muted-foreground">
@@ -71,7 +77,7 @@ export function SummaryCards({
               {card.value}
             </p>
             <p className="mt-0.5 text-[11px] text-muted-foreground/70">{card.sub}</p>
-          </div>
+          </Link>
         );
       })}
     </div>

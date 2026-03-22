@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import datetime, timedelta
 
 from app.services.dart_client import DartClient
 from app.services.watchlist import load_watchlist
+
+logger = logging.getLogger(__name__)
 
 
 async def get_watchlist_disclosures(
@@ -24,20 +27,24 @@ async def get_watchlist_disclosures(
     start = (datetime.now() - timedelta(days=days)).strftime("%Y%m%d")
 
     async def _fetch_one(stock: dict) -> list[dict]:
-        data = await dart_client.get_disclosure_list(
-            corp_code=stock["corp_code"],
-            bgn_de=start,
-            end_de=today,
-            page_count=100,
-        )
-        items = []
-        if data.get("status") == "000":
-            for item in data.get("list", []):
-                item["_watchlist_name"] = stock["corp_name"]
-                items.append(item)
-        return items
+        try:
+            data = await dart_client.get_disclosure_list(
+                corp_code=stock["corp_code"],
+                bgn_de=start,
+                end_de=today,
+                page_count=100,
+            )
+            items = []
+            if data.get("status") == "000":
+                for item in data.get("list", []):
+                    item["_watchlist_name"] = stock["corp_name"]
+                    items.append(item)
+            return items
+        except Exception:
+            logger.warning("Failed to fetch disclosures for %s", stock.get("corp_name", ""))
+            return []
 
-    # 모든 종목 병렬 호출
+    # 모든 종목 병렬 호출 (개별 실패 허용)
     all_results = await asyncio.gather(*[_fetch_one(s) for s in watchlist])
 
     results = [item for sublist in all_results for item in sublist]

@@ -1,7 +1,7 @@
 """AI 분석 결과 캐싱 (DB 기반)"""
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import select, cast, String
 from app.database import async_session
 from app.models.analysis_cache import AnalysisCache
 
@@ -72,24 +72,33 @@ async def search_similar(
     exclude_rcept_no: str,
     limit: int = 5,
 ) -> list[dict]:
-    all_cached = await list_all_cached_full()
+    """DB 쿼리로 유사 공시 검색 (키워드 매칭)"""
+    async with async_session() as session:
+        # 같은 카테고리의 캐시만 조회
+        query = (
+            select(AnalysisCache)
+            .where(
+                AnalysisCache.rcept_no != exclude_rcept_no,
+                AnalysisCache.rcept_dt != "",
+                cast(AnalysisCache.analysis["category"], String) == f'"{category}"',
+            )
+            .limit(200)
+        )
+        result = await session.execute(query)
+        rows = result.scalars().all()
+
+    # 키워드 매칭은 메모리에서 (최대 200건)
     scored = []
-    for item in all_cached:
-        rcept_no = item.get("rcept_no", "")
-        if rcept_no == exclude_rcept_no:
-            continue
-        analysis = item.get("analysis", {})
-        if analysis.get("category") != category:
-            continue
-        report_nm = item.get("report_nm", "")
-        match_count = sum(1 for kw in keywords if kw in report_nm)
+    for r in rows:
+        analysis = r.analysis or {}
+        match_count = sum(1 for kw in keywords if kw in (r.report_nm or ""))
         if match_count == 0:
             continue
         scored.append({
-            "rcept_no": rcept_no,
-            "corp_name": item.get("corp_name", ""),
-            "report_nm": report_nm,
-            "rcept_dt": item.get("rcept_dt", ""),
+            "rcept_no": r.rcept_no,
+            "corp_name": r.corp_name or "",
+            "report_nm": r.report_nm or "",
+            "rcept_dt": r.rcept_dt or "",
             "category": analysis.get("category", ""),
             "importance_score": analysis.get("importance_score", 0),
             "summary": analysis.get("summary", ""),

@@ -9,18 +9,22 @@ DEFAULT_TIMEOUT = 30
 
 
 class DartClient:
+    _shared_client: httpx.AsyncClient | None = None
+
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self._client: httpx.AsyncClient | None = None
 
-    async def _get_client(self) -> httpx.AsyncClient:
-        if self._client is None or self._client.is_closed:
-            self._client = httpx.AsyncClient(timeout=DEFAULT_TIMEOUT)
-        return self._client
+    @classmethod
+    async def _get_client(cls) -> httpx.AsyncClient:
+        if cls._shared_client is None or cls._shared_client.is_closed:
+            cls._shared_client = httpx.AsyncClient(timeout=DEFAULT_TIMEOUT)
+        return cls._shared_client
 
-    async def close(self) -> None:
-        if self._client and not self._client.is_closed:
-            await self._client.aclose()
+    @classmethod
+    async def close(cls) -> None:
+        if cls._shared_client and not cls._shared_client.is_closed:
+            await cls._shared_client.aclose()
+            cls._shared_client = None
 
     async def get_disclosure_list(
         self,
