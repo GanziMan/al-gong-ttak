@@ -16,9 +16,52 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = "https://al-zal-ttak.vercel.app";
+const SITE_NAME = "알잘딱";
+const SITE_TITLE = "알잘딱 | 공시, 알아서 잘 딱 깔끔하게";
+const SITE_DESC = "DART 공시를 AI가 자동으로 분석하고 호재/악재를 판별해드립니다. 관심종목 추적, 텔레그램 알림까지.";
+
 export const metadata: Metadata = {
-  title: "알잘딱 | AI 공시 분석",
-  description: "AI 기반 한국 주식시장 공시 분석 서비스",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_TITLE,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESC,
+  keywords: [
+    "공시 분석", "DART", "AI 공시", "주식 공시", "호재 악재",
+    "한국 주식", "공시 알림", "알잘딱", "관심종목", "텔레그램 알림",
+    "공시 필터링", "투자 정보", "금융 AI",
+  ],
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    siteName: SITE_NAME,
+    url: SITE_URL,
+    type: "website",
+    locale: "ko_KR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
 };
 
 export const viewport: Viewport = {
@@ -39,6 +82,34 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col bg-background">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              name: "알잘딱",
+              alternateName: "ALZALTTAK",
+              url: "https://al-zal-ttak.vercel.app",
+              description: "DART 공시를 AI가 자동으로 분석하고 호재/악재를 판별해드립니다.",
+              applicationCategory: "FinanceApplication",
+              operatingSystem: "Web",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "KRW",
+              },
+              inLanguage: "ko",
+            }),
+          }}
+        />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-ZY0B7D53G0"
+          strategy="afterInteractive"
+        />
+        <Script id="ga-init" strategy="afterInteractive">
+          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-ZY0B7D53G0');`}
+        </Script>
         <Script
           id="theme-init"
           strategy="beforeInteractive"

@@ -8,10 +8,12 @@ import {
 } from "@/components/important-disclosures";
 import { DisclosureHistoryChart } from "@/components/disclosure-history-chart";
 import { BookmarksSection } from "@/components/bookmarks-section";
+import { Landing } from "@/components/landing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, fetchWithRevalidate, DashboardSummary } from "@/lib/api";
+import { useAuth } from "@/components/auth-provider";
 
-export default function DashboardPage() {
+function Dashboard() {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -85,4 +87,26 @@ export default function DashboardPage() {
       <BookmarksSection />
     </div>
   );
+}
+
+export default function HomePage() {
+  const { isLoggedIn, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[100px] rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <Landing />;
+  }
+
+  return <Dashboard />;
 }
