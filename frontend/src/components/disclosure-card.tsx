@@ -13,6 +13,12 @@ interface DisclosureCardProps {
   onToggleBookmark?: (d: Disclosure) => void;
 }
 
+function openDart(rceptNo: string) {
+  const url = `https://dart.fss.or.kr/dsaf001/main.do?rcept_no=${rceptNo}`;
+  const w = window.open("about:blank", "_blank");
+  if (w) w.location.href = url;
+}
+
 export function DisclosureCard({ disclosure, isBookmarked, onToggleBookmark }: DisclosureCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [similar, setSimilar] = useState<SimilarDisclosure[] | null>(null);
@@ -51,17 +57,14 @@ export function DisclosureCard({ disclosure, isBookmarked, onToggleBookmark }: D
               </span>
             </div>
             <h3 className="text-[13px] font-medium leading-snug text-foreground/85">
-              <a
-                href={`https://dart.fss.or.kr/dsaf001/main.do?rcept_no=${disclosure.rcept_no}`}
-                referrerPolicy="no-referrer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group/link inline-flex items-center gap-1 hover:text-primary transition-colors"
-                onClick={(e) => e.stopPropagation()}
+              <button
+                type="button"
+                className="group/link inline-flex items-center gap-1 hover:text-primary transition-colors text-left"
+                onClick={(e) => { e.stopPropagation(); openDart(disclosure.rcept_no); }}
               >
                 {disclosure.report_nm}
                 <ExternalLink className="h-3 w-3 opacity-0 group-hover/link:opacity-60 transition-opacity shrink-0" />
-              </a>
+              </button>
             </h3>
           </div>
           <div className="flex items-start gap-1.5 shrink-0">
@@ -144,15 +147,13 @@ export function DisclosureCard({ disclosure, isBookmarked, onToggleBookmark }: D
                                 {s.importance_score}
                               </span>
                             </div>
-                            <a
-                              href={`https://dart.fss.or.kr/dsaf001/main.do?rcept_no=${s.rcept_no}`}
-                              referrerPolicy="no-referrer"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[11px] text-foreground/70 hover:text-primary transition-colors line-clamp-1"
+                            <button
+                              type="button"
+                              onClick={() => openDart(s.rcept_no)}
+                              className="text-[11px] text-foreground/70 hover:text-primary transition-colors line-clamp-1 text-left"
                             >
                               {s.report_nm}
-                            </a>
+                            </button>
                           </div>
                           <span className="text-[10px] text-muted-foreground/50 tabular-nums shrink-0">
                             {formatDate(s.rcept_dt)}
