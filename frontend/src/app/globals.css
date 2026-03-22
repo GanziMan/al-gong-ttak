@@ -147,6 +147,20 @@
   }
   html {
     @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+  }
+  /* iOS Safari: input focus 시 자동 확대 방지 (16px 미만일 때 발생) */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  @media screen and (min-width: 768px) {
+    input, select, textarea {
+      font-size: inherit;
+    }
+  }
+  /* 카카오 인앱브라우저 등 터치 시 하이라이트 제거 */
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
