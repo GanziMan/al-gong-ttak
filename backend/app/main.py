@@ -104,8 +104,11 @@ async def _auto_scan_loop() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 앱 시작 시 캐시 파일이 없으면 DART에서 다운로드
-    if not load_cached_corps() and settings.dart_api_key:
-        await download_corp_codes(settings.dart_api_key)
+    try:
+        if not load_cached_corps() and settings.dart_api_key:
+            await download_corp_codes(settings.dart_api_key)
+    except Exception:
+        logger.warning("Failed to download corp codes on startup, will retry later")
     # 자동 스캔 스케줄러 시작
     scan_task = asyncio.create_task(_auto_scan_loop())
     yield
