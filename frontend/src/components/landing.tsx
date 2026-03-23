@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -50,6 +50,7 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
   const [disclosures, setDisclosures] = useState<Disclosure[]>(initialDisclosures ?? []);
   const [loading, setLoading] = useState(!hasServerData);
 
+  // 서버 데이터 없으면 클라이언트 fetch
   useEffect(() => {
     if (hasServerData) return;
     async function load() {
@@ -68,6 +69,40 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
     }
     load();
   }, [hasServerData]);
+
+  // 미분석 공시가 있으면 5초 간격 폴링으로 분석 완료 반영
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasPending = disclosures.some((d) => !d.analysis);
+
+  useEffect(() => {
+    if (!hasPending) {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      return;
+    }
+    pollRef.current = setInterval(async () => {
+      try {
+        const data = await api.getPublicDisclosures({ days: 7 });
+        const fresh = data.disclosures.slice(0, 10);
+        setDisclosures(fresh);
+        setSummary((prev) => prev ? {
+          ...prev,
+          bullish: data.disclosures.filter((d) => d.analysis?.category === "호재").length,
+          bearish: data.disclosures.filter((d) => d.analysis?.category === "악재").length,
+        } : prev);
+      } catch {
+        // silent
+      }
+    }, 5000);
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [hasPending]);
 
   return (
     <div className="space-y-20 pb-12">
