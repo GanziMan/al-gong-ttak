@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Query, Depends
 
@@ -13,6 +14,7 @@ from app.services.dart_client import DartClient
 from app.services.disclosure_filter import get_watchlist_disclosures
 from app.services.watchlist import load_watchlist
 from app.services.analysis_cache import get_cached_analysis
+from app.services.dart_cache import get_cached_disclosures, set_cached_disclosures
 
 router = APIRouter()
 
@@ -28,6 +30,47 @@ async def _attach_analyses(disclosures: list[dict]) -> None:
     for d, cached in zip(disclosures, results):
         if cached:
             d["analysis"] = cached
+
+
+@router.get("/public")
+async def get_public_summary():
+    dart_client = DartClient(api_key=settings.dart_api_key)
+    today = datetime.now().strftime("%Y%m%d")
+    start = (datetime.now() - timedelta(days=7)).strftime("%Y%m%d")
+    cache_key = f"public_{start}_{today}"
+
+    cached_list = await get_cached_disclosures(cache_key)
+    if cached_list is None:
+        cached_list = await dart_client.get_all_disclosures(bgn_de=start, end_de=today)
+        await set_cached_disclosures(cache_key, cached_list)
+
+    disclosures = list(cached_list)
+    await _attach_analyses(disclosures)
+
+    bullish = 0
+    bearish = 0
+    important = []
+
+    for d in disclosures:
+        cached = d.get("analysis")
+        if cached:
+            cat = cached.get("category", "")
+            score = cached.get("importance_score", 0)
+            if cat == "호재":
+                bullish += 1
+            elif cat == "악재":
+                bearish += 1
+            if score >= 50:
+                important.append(d)
+
+    return {
+        "watchlist_count": 0,
+        "today_disclosures": len(disclosures),
+        "bullish": bullish,
+        "bearish": bearish,
+        "important_disclosures": important[:5],
+        "recent_disclosures": disclosures[:10],
+    }
 
 
 @router.get("/summary")
