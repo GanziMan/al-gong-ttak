@@ -9,11 +9,13 @@ import { DisclosureCard } from "@/components/disclosure-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, fetchWithRevalidate, Bookmark, Disclosure } from "@/lib/api";
+import { useAuth } from "@/components/auth-provider";
 
 function DisclosuresContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const corpCode = searchParams.get("corp_code");
+  const { isLoggedIn } = useAuth();
 
   const [disclosures, setDisclosures] = useState<Disclosure[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +54,25 @@ function DisclosuresContent() {
 
   const fetchDisclosures = useCallback(async (isPolling = false) => {
     if (!isPolling) {
+      // 비로그인: public API 호출
+      if (!isLoggedIn) {
+        try {
+          const data = await api.getPublicDisclosures({
+            days,
+            category: category !== "all" ? category : undefined,
+            min_score: minScore || undefined,
+          });
+          setDisclosures(data.disclosures);
+          setPendingAnalysis(data.pending_analysis);
+          setError("");
+        } catch {
+          setError("공시 데이터를 불러올 수 없습니다.");
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
       // 첫 로딩 시 캐시에서 즉시 표시
       const sp = new URLSearchParams();
       if (days !== 7) sp.set("days", String(days));
@@ -81,6 +102,22 @@ function DisclosuresContent() {
       }
     } else {
       // 폴링 시에는 직접 fetch
+      if (!isLoggedIn) {
+        try {
+          const data = await api.getPublicDisclosures({
+            days,
+            category: category !== "all" ? category : undefined,
+            min_score: minScore || undefined,
+          });
+          setDisclosures(data.disclosures);
+          setPendingAnalysis(data.pending_analysis);
+          setError("");
+        } catch {
+          // 폴링 실패는 무시
+        }
+        return;
+      }
+
       try {
         const data = await api.getDisclosures({
           days,
@@ -94,7 +131,7 @@ function DisclosuresContent() {
         // 폴링 실패는 무시
       }
     }
-  }, [days, category, minScore]);
+  }, [days, category, minScore, isLoggedIn]);
 
   useEffect(() => {
     fetchDisclosures();
@@ -103,8 +140,10 @@ function DisclosuresContent() {
     const yyyymmdd = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`;
     localStorage.setItem("disclosures_last_seen", yyyymmdd);
     // 북마크 로드
-    api.getBookmarks().then((data) => setBookmarks(data.bookmarks)).catch(() => {});
-  }, [fetchDisclosures]);
+    if (isLoggedIn) {
+      api.getBookmarks().then((data) => setBookmarks(data.bookmarks)).catch(() => {});
+    }
+  }, [fetchDisclosures, isLoggedIn]);
 
   // AI 분석 완료 감지
   useEffect(() => {
@@ -159,7 +198,7 @@ function DisclosuresContent() {
             <>
               <h1 className="text-2xl font-bold tracking-tight">공시</h1>
               <p className="text-[12px] text-muted-foreground mt-0.5">
-                관심종목의 AI 분석 공시
+                {isLoggedIn ? "관심종목의 AI 분석 공시" : "전체 AI 분석 공시"}
               </p>
               {pendingAnalysis > 0 && (
                 <div className="mt-1.5 flex items-center gap-2">
@@ -201,9 +240,9 @@ function DisclosuresContent() {
             <p className="mt-1.5 text-[11px] text-muted-foreground/60">
               {corpCode
                 ? "기간이나 필터를 조정해 보세요"
-                : "관심종목을 추가하거나 필터를 조정하세요"}
+                : isLoggedIn ? "관심종목을 추가하거나 필터를 조정하세요" : "필터를 조정하거나 나중에 다시 시도해 보세요"}
             </p>
-            {!corpCode && (
+            {!corpCode && isLoggedIn && (
               <Link href="/watchlist" className="mt-3 inline-block">
                 <Button variant="outline" size="sm">관심종목 추가하기</Button>
               </Link>
@@ -216,6 +255,15 @@ function DisclosuresContent() {
               disclosure={d}
               isBookmarked={bookmarks.some((b) => b.rcept_no === d.rcept_no)}
               onToggleBookmark={async (disc) => {
+                if (!isLoggedIn) {
+                  toast("로그인하면 북마크를 저장할 수 있어요", {
+                    action: {
+                      label: "로그인",
+                      onClick: () => { window.location.href = "/login"; },
+                    },
+                  });
+                  return;
+                }
                 const exists = bookmarks.some((b) => b.rcept_no === disc.rcept_no);
                 const prev = bookmarks;
                 // Optimistic update
