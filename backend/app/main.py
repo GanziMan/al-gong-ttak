@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,8 +15,9 @@ from app.services.corp_code_loader import load_cached_corps, download_corp_codes
 from app.services.dart_client import DartClient
 from app.services.disclosure_filter import get_watchlist_disclosures
 from app.services.analysis_cache import get_cached_analysis
+from app.services.dart_cache import get_cached_disclosures, set_cached_disclosures
 from app.services.watchlist import load_watchlist
-from app.routers.disclosure_api import _enrich_one
+from app.routers.disclosure_api import _enrich_one, _analyze_batch_public
 from app.services.settings import load_settings
 from app.services.telegram import send_alert, format_disclosure_alert, format_keyword_alert
 from app.models.watchlist import Watchlist
@@ -34,6 +36,42 @@ async def _get_active_user_ids() -> list[int]:
             select(Watchlist.user_id).distinct()
         )
         return [r[0] for r in result.all()]
+
+
+async def _warmup_public_cache() -> None:
+    """서버 시작 시 public 공시를 미리 분석한다."""
+    try:
+        await asyncio.sleep(3)
+        logger.info("Public cache warmup: fetching recent disclosures")
+        dart_client = DartClient(api_key=settings.dart_api_key)
+        now = datetime.now()
+        today = now.strftime("%Y%m%d")
+        start = (now - timedelta(days=7)).strftime("%Y%m%d")
+        cache_key = f"public_{start}_{today}"
+
+        cached_list = await get_cached_disclosures(cache_key)
+        if cached_list is None:
+            cached_list = await dart_client.get_all_disclosures(bgn_de=start, end_de=today)
+            await set_cached_disclosures(cache_key, cached_list)
+
+        disclosures = list(cached_list)
+
+        # 미분석 공시 찾기
+        pending = []
+        for d in disclosures:
+            rcept_no = d.get("rcept_no", "")
+            if rcept_no:
+                cached = await get_cached_analysis(rcept_no)
+                if cached is None:
+                    pending.append(d)
+
+        if pending:
+            logger.info("Public cache warmup: analyzing %d disclosures", len(pending))
+            await _analyze_batch_public(pending)
+        else:
+            logger.info("Public cache warmup: all disclosures already analyzed")
+    except Exception:
+        logger.exception("Public cache warmup failed")
 
 
 async def _warmup_cache() -> None:
@@ -61,6 +99,8 @@ async def _auto_scan_loop() -> None:
     while True:
         await asyncio.sleep(AUTO_SCAN_INTERVAL)
         try:
+            # public 공시 미리 분석
+            await _warmup_public_cache()
             logger.info("Auto-scan started")
             user_ids = await _get_active_user_ids()
             dart_client = DartClient(api_key=settings.dart_api_key)
@@ -153,11 +193,13 @@ async def _download_corps_background() -> None:
 async def lifespan(app: FastAPI):
     await init_db()
     corp_task = asyncio.create_task(_download_corps_background())
+    public_warmup_task = asyncio.create_task(_warmup_public_cache())
     warmup_task = asyncio.create_task(_warmup_cache())
     scan_task = asyncio.create_task(_auto_scan_loop())
     yield
     scan_task.cancel()
     warmup_task.cancel()
+    public_warmup_task.cancel()
     corp_task.cancel()
 
 

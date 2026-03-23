@@ -19,6 +19,9 @@ DART_BASE_URL = "https://opendart.fss.or.kr/api"
 
 BATCH_SIZE = 500
 
+# 인메모리 캐시 — 서버 시작 시 로드, 검색 시 DB 접근 불필요
+_corps_cache: List[Dict] = []
+
 
 async def download_corp_codes(api_key: str) -> List[Dict]:
     """DART에서 기업코드 목록 다운로드 → DB 저장 (batch insert)"""
@@ -58,22 +61,45 @@ async def download_corp_codes(api_key: str) -> List[Dict]:
         await session.commit()
 
     logger.info("Successfully inserted %d corp codes to DB", len(corps))
+
+    global _corps_cache
+    _corps_cache = corps
+    logger.info("In-memory corps cache updated: %d items", len(corps))
+
     return corps
 
 
 async def load_cached_corps() -> List[Dict]:
-    """DB에서 기업코드 목록 로드"""
+    """DB에서 기업코드 목록 로드 → 인메모리 캐시에 저장"""
+    global _corps_cache
     async with async_session() as session:
         result = await session.execute(select(CorpCode))
         rows = result.scalars().all()
-        return [{"corp_code": r.corp_code, "corp_name": r.corp_name, "stock_code": r.stock_code} for r in rows]
+        corps = [{"corp_code": r.corp_code, "corp_name": r.corp_name, "stock_code": r.stock_code} for r in rows]
+
+    if corps:
+        _corps_cache = corps
+        logger.info("In-memory corps cache loaded: %d items", len(corps))
+
+    return corps
 
 
 async def search_corps(keyword: str) -> List[Dict]:
-    """기업명으로 검색 (DB)"""
-    async with async_session() as session:
-        result = await session.execute(
-            select(CorpCode).where(CorpCode.corp_name.ilike(f"%{keyword}%")).limit(20)
-        )
-        rows = result.scalars().all()
-        return [{"corp_code": r.corp_code, "corp_name": r.corp_name, "stock_code": r.stock_code} for r in rows]
+    """기업명으로 검색 (인메모리, DB 접근 없음)"""
+    if not _corps_cache:
+        await load_cached_corps()
+
+    kw = keyword.lower()
+    # 접두사 매치 우선, 그 다음 포함 매치
+    prefix = []
+    contains = []
+    for c in _corps_cache:
+        name_lower = c["corp_name"].lower()
+        if name_lower.startswith(kw):
+            prefix.append(c)
+        elif kw in name_lower:
+            contains.append(c)
+        if len(prefix) + len(contains) >= 20:
+            break
+
+    return (prefix + contains)[:20]

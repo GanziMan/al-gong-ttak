@@ -9,6 +9,8 @@ interface StockSearchProps {
   onSelect: (corp: Corp) => void;
 }
 
+const searchCache = new Map<string, Corp[]>();
+
 export function StockSearch({ onSelect }: StockSearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Corp[]>([]);
@@ -23,10 +25,19 @@ export function StockSearch({ onSelect }: StockSearchProps) {
       return;
     }
 
+    // 캐시 히트 시 즉시 표시
+    const cached = searchCache.get(query);
+    if (cached) {
+      setResults(cached);
+      setOpen(cached.length > 0);
+      return;
+    }
+
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const data = await api.searchCorps(query);
+        searchCache.set(query, data.results);
         setResults(data.results);
         setOpen(data.results.length > 0);
       } catch {
