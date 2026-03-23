@@ -163,9 +163,13 @@
     -webkit-tap-highlight-color: transparent;
   }
   /* Recharts 클릭 시 focus outline 제거 */
+  .recharts-surface,
   .recharts-surface:focus,
-  .recharts-wrapper:focus {
-    outline: none;
+  .recharts-surface:focus-visible,
+  .recharts-wrapper,
+  .recharts-wrapper:focus,
+  .recharts-wrapper:focus-visible {
+    outline: none !important;
   }
 }
 

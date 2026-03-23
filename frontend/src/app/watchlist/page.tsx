@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { StockSearch } from "@/components/stock-search";
 import { WatchlistTable } from "@/components/watchlist-table";
-import { api, fetchWithRevalidate, Corp, WatchlistItem } from "@/lib/api";
+import { api, Corp, WatchlistItem } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WatchlistPage() {
@@ -14,11 +14,8 @@ export default function WatchlistPage() {
 
   const fetchWatchlist = useCallback(async () => {
     try {
-      const cached = await fetchWithRevalidate<{ watchlist: WatchlistItem[] }>(
-        "/api/watchlist",
-        (fresh) => setWatchlist(fresh.watchlist),
-      );
-      if (cached) setWatchlist(cached.watchlist);
+      const data = await api.getWatchlist();
+      setWatchlist(data.watchlist);
       setError("");
     } catch {
       setError("관심종목을 불러올 수 없습니다. 백엔드 서버를 확인하세요.");
