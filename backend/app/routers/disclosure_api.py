@@ -189,8 +189,9 @@ async def get_public_disclosures(
     min_score: int = Query(0, ge=0, le=100),
 ):
     dart_client = DartClient(api_key=settings.dart_api_key)
-    today = datetime.now().strftime("%Y%m%d")
-    start = (datetime.now() - timedelta(days=days)).strftime("%Y%m%d")
+    now = datetime.now()
+    today = now.strftime("%Y%m%d")
+    start = (now - timedelta(days=days)).strftime("%Y%m%d")
     cache_key = f"public_{start}_{today}"
 
     # 캐시 확인

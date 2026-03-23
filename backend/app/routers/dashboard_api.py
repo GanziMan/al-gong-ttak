@@ -35,8 +35,9 @@ async def _attach_analyses(disclosures: list[dict]) -> None:
 @router.get("/public")
 async def get_public_summary():
     dart_client = DartClient(api_key=settings.dart_api_key)
-    today = datetime.now().strftime("%Y%m%d")
-    start = (datetime.now() - timedelta(days=7)).strftime("%Y%m%d")
+    now = datetime.now()
+    today = now.strftime("%Y%m%d")
+    start = (now - timedelta(days=7)).strftime("%Y%m%d")
     cache_key = f"public_{start}_{today}"
 
     cached_list = await get_cached_disclosures(cache_key)

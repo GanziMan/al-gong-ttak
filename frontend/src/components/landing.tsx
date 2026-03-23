@@ -108,7 +108,7 @@ export function Landing() {
       {/* 실시간 요약 */}
       <section className="grid grid-cols-3 gap-3">
         <div className="glass-card rounded-2xl p-4 text-center">
-          <p className="text-[10px] font-medium text-muted-foreground">오늘 공시</p>
+          <p className="text-[10px] font-medium text-muted-foreground">최근 7일 공시</p>
           <p className="text-2xl font-black text-foreground mt-1">{summary?.today_disclosures ?? "-"}</p>
           <p className="text-[10px] text-muted-foreground/60 mt-0.5">건</p>
         </div>
