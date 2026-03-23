@@ -38,12 +38,19 @@ const features = [
   },
 ];
 
-export function Landing() {
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [disclosures, setDisclosures] = useState<Disclosure[]>([]);
-  const [loading, setLoading] = useState(true);
+interface LandingProps {
+  summary?: DashboardSummary | null;
+  disclosures?: Disclosure[];
+}
+
+export function Landing({ summary: initialSummary, disclosures: initialDisclosures }: LandingProps = {}) {
+  const hasServerData = initialSummary != null || (initialDisclosures && initialDisclosures.length > 0);
+  const [summary, setSummary] = useState<DashboardSummary | null>(initialSummary ?? null);
+  const [disclosures, setDisclosures] = useState<Disclosure[]>(initialDisclosures ?? []);
+  const [loading, setLoading] = useState(!hasServerData);
 
   useEffect(() => {
+    if (hasServerData) return;
     async function load() {
       try {
         const [dashData, discData] = await Promise.all([
@@ -59,7 +66,7 @@ export function Landing() {
       }
     }
     load();
-  }, []);
+  }, [hasServerData]);
 
   return (
     <div className="space-y-20 pb-12">
