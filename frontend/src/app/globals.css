@@ -139,6 +139,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    word-break: keep-all;
     background-image: radial-gradient(ellipse at 50% 0%, oklch(0.92 0.02 270 / 0.15) 0%, transparent 60%);
     background-attachment: fixed;
   }
