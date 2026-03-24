@@ -128,7 +128,7 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
             호재/악재를 판별해 알려드립니다
           </p>
 
-          <div className="mt-10">
+          <div className="mt-10 pb-5">
             <Link
               href="/disclosures"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20"

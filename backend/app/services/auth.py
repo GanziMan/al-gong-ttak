@@ -1,91 +1,83 @@
-"""카카오 OAuth + JWT 인증 서비스"""
+"""Supabase Auth 인증 서비스"""
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 import jwt
-import httpx
+from jwt import PyJWKClient
 from sqlalchemy import select
 
 from app.config import settings
 from app.database import async_session
 from app.models.user import User
 
-KAKAO_AUTH_URL = "https://kauth.kakao.com/oauth/authorize"
-KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token"
-KAKAO_USER_URL = "https://kapi.kakao.com/v2/user/me"
+_jwks_client: PyJWKClient | None = None
 
 
-def get_kakao_login_url() -> str:
-    return (
-        f"{KAKAO_AUTH_URL}"
-        f"?client_id={settings.kakao_client_id}"
-        f"&redirect_uri={settings.kakao_redirect_uri}"
-        f"&response_type=code"
+def _get_jwks_client() -> PyJWKClient:
+    global _jwks_client
+    if _jwks_client is None:
+        jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
+        _jwks_client = PyJWKClient(jwks_url, cache_keys=True)
+    return _jwks_client
+
+
+def decode_supabase_jwt(token: str) -> dict:
+    """Supabase JWT 디코딩 (JWKS 공개키, aud=authenticated)"""
+    signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
+    return jwt.decode(
+        token,
+        signing_key.key,
+        algorithms=["ES256", "RS256"],
+        audience="authenticated",
     )
 
 
-async def exchange_kakao_code(code: str) -> dict:
-    """인가 코드 → 카카오 access_token 교환"""
-    data = {
-        "grant_type": "authorization_code",
-        "client_id": settings.kakao_client_id,
-        "redirect_uri": settings.kakao_redirect_uri,
-        "code": code,
-    }
-    if settings.kakao_client_secret:
-        data["client_secret"] = settings.kakao_client_secret
-
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(KAKAO_TOKEN_URL, data=data)
-        if resp.status_code != 200:
-            import logging
-            logging.getLogger(__name__).error(
-                "Kakao token error: %s %s", resp.status_code, resp.text
-            )
-        resp.raise_for_status()
-        return resp.json()
-
-
-async def get_kakao_user(access_token: str) -> dict:
-    """카카오 사용자 정보 조회"""
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            KAKAO_USER_URL,
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-
-async def get_or_create_user(kakao_id: str, nickname: str, profile_image: str) -> User:
+async def get_or_create_user_from_supabase(
+    supabase_uid: str,
+    kakao_id: str,
+    nickname: str,
+    profile_image: str,
+) -> User:
+    """supabase_uid로 유저 조회, 없으면 kakao_id로 기존 유저 링크, 없으면 신규 생성"""
     async with async_session() as session:
-        result = await session.execute(select(User).where(User.kakao_id == kakao_id))
+        # 1) supabase_uid로 조회
+        result = await session.execute(
+            select(User).where(User.supabase_uid == supabase_uid)
+        )
         user = result.scalar_one_or_none()
+
         if user:
             user.nickname = nickname
             user.profile_image = profile_image
             user.last_login = datetime.utcnow()
-        else:
-            user = User(
-                kakao_id=kakao_id,
-                nickname=nickname,
-                profile_image=profile_image,
+            await session.commit()
+            await session.refresh(user)
+            return user
+
+        # 2) kakao_id로 기존 유저 검색 → supabase_uid 연결
+        if kakao_id:
+            result = await session.execute(
+                select(User).where(User.kakao_id == kakao_id)
             )
-            session.add(user)
+            user = result.scalar_one_or_none()
+            if user:
+                user.supabase_uid = supabase_uid
+                user.nickname = nickname
+                user.profile_image = profile_image
+                user.last_login = datetime.utcnow()
+                await session.commit()
+                await session.refresh(user)
+                return user
+
+        # 3) 새 유저 생성
+        user = User(
+            kakao_id=kakao_id or supabase_uid,
+            supabase_uid=supabase_uid,
+            nickname=nickname,
+            profile_image=profile_image,
+        )
+        session.add(user)
         await session.commit()
         await session.refresh(user)
         return user
-
-
-def create_jwt(user_id: int) -> str:
-    payload = {
-        "sub": str(user_id),
-        "iat": datetime.now(timezone.utc),
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expire_minutes),
-    }
-    return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
-
-
-def decode_jwt(token: str) -> dict:
-    return jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])

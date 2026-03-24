@@ -1,18 +1,10 @@
-const TOKEN_KEY = "al_zal_ttak_token";
+import { getSupabase } from "./supabase";
 
-export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
+export async function getToken(): Promise<string | null> {
+  const { data } = await getSupabase().auth.getSession();
+  return data.session?.access_token ?? null;
 }
 
-export function setToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
-}
-
-export function removeToken(): void {
-  localStorage.removeItem(TOKEN_KEY);
-}
-
-export function isLoggedIn(): boolean {
-  return !!getToken();
+export async function signOut() {
+  await getSupabase().auth.signOut();
 }

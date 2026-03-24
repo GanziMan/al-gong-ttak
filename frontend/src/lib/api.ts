@@ -1,4 +1,4 @@
-import { getToken, removeToken } from "./auth";
+import { getToken, signOut } from "./auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -44,7 +44,7 @@ function isFresh(key: string): boolean {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const token = getToken();
+  const token = await getToken();
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
@@ -54,7 +54,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     },
   });
   if (res.status === 401) {
-    removeToken();
+    await signOut();
     const currentPath = window.location.pathname;
     if (currentPath !== "/login" && !currentPath.startsWith("/auth/")) {
       window.location.href = "/login";

@@ -3,9 +3,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
 
+from app.database import async_session
+from app.models.user import User
 from app.services.briefing import generate_daily_briefing
-from app.services.auth import decode_jwt
+from app.services.auth import decode_supabase_jwt
 
 router = APIRouter()
 
@@ -20,8 +23,13 @@ async def daily_briefing(
     user_id = None
     if cred:
         try:
-            payload = decode_jwt(cred.credentials)
-            user_id = int(payload["sub"])
+            payload = decode_supabase_jwt(cred.credentials)
+            supabase_uid = payload["sub"]
+            async with async_session() as session:
+                result = await session.execute(
+                    select(User.id).where(User.supabase_uid == supabase_uid)
+                )
+                user_id = result.scalar_one_or_none()
         except Exception:
             pass
     briefing = await generate_daily_briefing(user_id=user_id)

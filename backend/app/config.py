@@ -10,17 +10,8 @@ class Settings(BaseSettings):
     telegram_chat_id: str = ""
     database_url: str = "postgresql+asyncpg://localhost/al_zal_ttak"
 
-    # Kakao OAuth
-    kakao_client_id: str = ""
-    kakao_client_secret: str = ""
-    kakao_redirect_uri: str = ""
-
-    # JWT
-    jwt_secret: str = "change-me-in-production"
-    jwt_expire_minutes: int = 10080  # 7일
-
-    # Frontend URL (OAuth callback redirect)
-    frontend_url: str = "http://localhost:3000"
+    # Supabase Auth
+    supabase_url: str = ""  # e.g. https://xxxx.supabase.co
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

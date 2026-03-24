@@ -9,6 +9,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     kakao_id: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
+    supabase_uid: Mapped[str | None] = mapped_column(String, unique=True, nullable=True, index=True)
     nickname: Mapped[str] = mapped_column(String, default="")
     profile_image: Mapped[str] = mapped_column(String, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

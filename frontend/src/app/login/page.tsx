@@ -2,8 +2,7 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { getSupabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const { isLoggedIn, isLoading } = useAuth();
@@ -13,6 +12,13 @@ export default function LoginPage() {
       window.location.href = "/";
     }
   }, [isLoading, isLoggedIn]);
+
+  const handleLogin = () => {
+    getSupabase().auth.signInWithOAuth({
+      provider: "kakao",
+      options: { redirectTo: window.location.origin + "/auth/callback" },
+    });
+  };
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
@@ -24,9 +30,9 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <a
-          href={`${API_BASE}/api/auth/kakao/login`}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-colors"
+        <button
+          onClick={handleLogin}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-colors cursor-pointer"
           style={{ backgroundColor: "#FEE500", color: "#000000" }}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -38,7 +44,7 @@ export default function LoginPage() {
             />
           </svg>
           카카오로 시작하기
-        </a>
+        </button>
 
         <p className="text-xs text-muted-foreground/60">
           로그인하면 관심종목, 북마크 등을 저장할 수 있습니다
