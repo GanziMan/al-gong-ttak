@@ -10,11 +10,8 @@ import { api, getCached, setCache, Corp, WatchlistItem } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WatchlistPage() {
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => {
-    const cached = getCached<{ watchlist: WatchlistItem[] }>("/api/watchlist");
-    return cached?.watchlist ?? [];
-  });
-  const [loading, setLoading] = useState(() => !getCached("/api/watchlist"));
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const fetchWatchlist = useCallback(async () => {
