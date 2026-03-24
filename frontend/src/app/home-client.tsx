@@ -100,7 +100,13 @@ interface HomeClientProps {
 export function HomeClient({ summary, disclosures }: HomeClientProps) {
   const { isLoggedIn, isLoading } = useAuth();
 
+  // 로딩 중이더라도 SSG 데이터가 있으면 Landing을 바로 보여줌 (비로그인 유저 UX)
+  // 로그인 유저로 확인되면 Dashboard로 전환
   if (isLoading) {
+    // SSG 데이터가 있으면 Landing을 먼저 표시 (hydration flicker 방지)
+    if (summary || (disclosures && disclosures.length > 0)) {
+      return <Landing summary={summary} disclosures={disclosures} />;
+    }
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
