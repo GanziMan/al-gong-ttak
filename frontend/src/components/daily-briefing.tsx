@@ -16,70 +16,82 @@ export function DailyBriefing() {
     api.getDailyBriefing().then((d) => { setData(d); setCache(CACHE_KEY, d); }).catch(() => {});
   }, []);
 
-  if (!data) return null;
-
   return (
     <div className="rounded-2xl bg-gradient-to-r from-primary/5 via-violet-500/5 to-transparent border border-primary/10 px-5 py-4">
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="h-4 w-4 text-primary" />
         <h2 className="text-[14px] font-bold">오늘의 브리핑</h2>
-        <span className="text-[11px] text-muted-foreground ml-auto">{data.date}</span>
+        {data && <span className="text-[11px] text-muted-foreground ml-auto">{data.date}</span>}
       </div>
 
-      {/* Metric chips */}
-      <div className="flex flex-wrap gap-2 mb-3">
-        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2.5 py-1 text-[11px] font-semibold text-green-600 dark:text-green-400">
-          <TrendingUp className="h-3 w-3" />
-          호재 {data.bullish}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-600 dark:text-red-400">
-          <TrendingDown className="h-3 w-3" />
-          악재 {data.bearish}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-zinc-500/10 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-          <Minus className="h-3 w-3" />
-          중립 {data.neutral}
-        </span>
-      </div>
+      {data ? (
+        <>
+          {/* Metric chips */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2.5 py-1 text-[11px] font-semibold text-green-600 dark:text-green-400">
+              <TrendingUp className="h-3 w-3" />
+              호재 {data.bullish}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-600 dark:text-red-400">
+              <TrendingDown className="h-3 w-3" />
+              악재 {data.bearish}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-500/10 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+              <Minus className="h-3 w-3" />
+              중립 {data.neutral}
+            </span>
+          </div>
 
-      {/* Top disclosures */}
-      {data.top_disclosures.length > 0 && (
-        <div className="space-y-1.5 mb-3">
-          {data.top_disclosures.map((d, i) => (
-            <div key={i} className="flex items-center gap-2 text-[12px]">
-              <span
-                className={cn(
-                  "text-[10px] font-bold tabular-nums w-6 text-center",
-                  d.importance_score >= 70 ? "text-red-500" : d.importance_score >= 40 ? "text-amber-500" : "text-muted-foreground",
-                )}
-              >
-                {d.importance_score}
-              </span>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-[9px] rounded-md px-1 py-0",
-                  d.category === "호재" && "border-green-500/30 text-green-600",
-                  d.category === "악재" && "border-red-500/30 text-red-600",
-                )}
-              >
-                {d.category}
-              </Badge>
-              <span className="font-medium text-foreground/80 truncate">
-                {d.corp_name}
-              </span>
-              <span className="text-muted-foreground/60 truncate flex-1">
-                {d.report_nm}
-              </span>
+          {/* Top disclosures */}
+          {data.top_disclosures.length > 0 && (
+            <div className="space-y-1.5 mb-3">
+              {data.top_disclosures.map((d, i) => (
+                <div key={i} className="flex items-center gap-2 text-[12px]">
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold tabular-nums w-6 text-center",
+                      d.importance_score >= 70 ? "text-red-500" : d.importance_score >= 40 ? "text-amber-500" : "text-muted-foreground",
+                    )}
+                  >
+                    {d.importance_score}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-[9px] rounded-md px-1 py-0",
+                      d.category === "호재" && "border-green-500/30 text-green-600",
+                      d.category === "악재" && "border-red-500/30 text-red-600",
+                    )}
+                  >
+                    {d.category}
+                  </Badge>
+                  <span className="font-medium text-foreground/80 truncate">
+                    {d.corp_name}
+                  </span>
+                  <span className="text-muted-foreground/60 truncate flex-1">
+                    {d.report_nm}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          {/* Narrative */}
+          <p className="text-[12px] text-muted-foreground/70 leading-relaxed mb-2">
+            {data.narrative}
+          </p>
+        </>
+      ) : (
+        <div className="space-y-2.5 mb-3">
+          <div className="flex gap-2">
+            <div className="h-6 w-16 rounded-full bg-muted animate-pulse" />
+            <div className="h-6 w-16 rounded-full bg-muted animate-pulse" />
+            <div className="h-6 w-16 rounded-full bg-muted animate-pulse" />
+          </div>
+          <div className="h-3 w-full rounded bg-muted animate-pulse" />
+          <div className="h-3 w-3/4 rounded bg-muted animate-pulse" />
         </div>
       )}
-
-      {/* Narrative */}
-      <p className="text-[12px] text-muted-foreground/70 leading-relaxed mb-2">
-        {data.narrative}
-      </p>
 
       <Link
         href="/disclosures"
