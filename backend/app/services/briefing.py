@@ -13,10 +13,10 @@ from app.services.watchlist import load_watchlist
 
 async def generate_daily_briefing(user_id: int | None = None) -> dict:
     now = datetime.now(tz=ZoneInfo("Asia/Seoul"))
-    cutoff = (now - timedelta(hours=24)).strftime("%Y%m%d")
+    cutoff = now.strftime("%Y%m%d")
     today = now.strftime("%Y-%m-%d")
 
-    # 최근 24시간 분석된 공시 조회
+    # 오늘 날짜 공시만 조회
     async with async_session() as session:
         query = select(AnalysisCache).where(AnalysisCache.rcept_dt >= cutoff)
         result = await session.execute(query)
@@ -58,7 +58,7 @@ async def generate_daily_briefing(user_id: int | None = None) -> dict:
 
     # 요약 narrative 생성
     if total == 0:
-        narrative = "최근 24시간 내 공시가 없습니다."
+        narrative = "오늘 접수된 공시가 없습니다."
     else:
         parts = []
         if bullish:

@@ -62,10 +62,10 @@ export function DisclosureCard({ disclosure, isBookmarked, onToggleBookmark }: D
             <h3 className="text-[13px] font-medium leading-snug text-foreground/85">
               <button
                 type="button"
-                className="group/link inline-flex items-center gap-1 hover:text-primary transition-colors text-left"
+                className="group/link flex items-center gap-1 hover:text-primary transition-colors text-left max-w-full"
                 onClick={(e) => { e.stopPropagation(); openDisclosure(disclosure.corp_name, disclosure.report_nm); }}
               >
-                <GlossaryHighlight text={disclosure.report_nm} />
+                <span className="truncate"><GlossaryHighlight text={disclosure.report_nm} /></span>
                 <ExternalLink className="h-3 w-3 opacity-0 group-hover/link:opacity-60 transition-opacity shrink-0" />
               </button>
             </h3>
