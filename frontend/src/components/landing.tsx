@@ -107,7 +107,7 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
   return (
     <div className="space-y-20 pb-12">
       {/* Hero */}
-      <section className="relative flex flex-col items-center text-center pt-12 sm:pt-20 overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 w-screen max-w-none">
+      <section className="relative flex flex-col items-center text-center pt-12 sm:pt-20 overflow-hidden">
         {/* Glow — 모바일에서도 원형 유지되도록 뷰포트 대비 크기 제한 */}
         <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[80vw] sm:w-[600px] h-[400px] rounded-full bg-primary/8 blur-[100px]" />
 
