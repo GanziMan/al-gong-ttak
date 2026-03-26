@@ -92,6 +92,8 @@
   --glass-blur: 12px;
   --bottom-nav-height: 4.5rem;
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-height: 3.5rem;
+  --toast-offset: 1rem;
 }
 
 .dark {

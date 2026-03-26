@@ -15,17 +15,23 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const [pullDistance, setPullDistance] = useState(0);
   const startY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const onRefreshRef = useRef(onRefresh);
 
   const PULL_THRESHOLD = 80;
   const MAX_PULL = 120;
+
+  // onRefresh 참조 업데이트 (의존성 배열에서 제외하기 위함)
+  useEffect(() => {
+    onRefreshRef.current = onRefresh;
+  }, [onRefresh]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      // 스크롤이 맨 위에 있을 때만 pull to refresh 활성화
-      if (window.scrollY === 0) {
+      // iOS bounce scroll 고려하여 <= 0으로 변경
+      if (window.scrollY <= 0) {
         startY.current = e.touches[0].clientY;
       }
     };
@@ -54,7 +60,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
         setRefreshing(true);
         setPullDistance(PULL_THRESHOLD);
         try {
-          await onRefresh();
+          await onRefreshRef.current();
         } finally {
           setTimeout(() => {
             setRefreshing(false);
@@ -78,7 +84,9 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       container.removeEventListener("touchmove", handleTouchMove);
       container.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [pullDistance, refreshing, onRefresh]);
+    // onRefresh를 의존성에서 제거하여 메모리 누수 방지
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pullDistance, refreshing]);
 
   const opacity = Math.min(pullDistance / PULL_THRESHOLD, 1);
   const scale = Math.min(0.5 + (pullDistance / PULL_THRESHOLD) * 0.5, 1);

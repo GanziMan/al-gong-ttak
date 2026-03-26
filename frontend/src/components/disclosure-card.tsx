@@ -17,7 +17,14 @@ interface DisclosureCardProps {
 
 function openDisclosure(corpName: string, reportNm: string) {
   const query = encodeURIComponent(`${corpName} ${reportNm} DART 공시`);
-  window.open(`https://search.naver.com/search.naver?query=${query}`, "_blank");
+  const url = `https://search.naver.com/search.naver?query=${query}`;
+
+  // 보안을 위해 rel="noopener noreferrer" 적용
+  const link = document.createElement('a');
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.click();
 }
 
 export function DisclosureCard({ disclosure, isBookmarked, onToggleBookmark }: DisclosureCardProps) {
@@ -66,7 +73,7 @@ export function DisclosureCard({ disclosure, isBookmarked, onToggleBookmark }: D
             <h3 className="text-[13px] font-medium leading-snug text-foreground/85">
               <button
                 type="button"
-                className="group/link flex items-center gap-1 hover:text-primary transition-colors text-left max-w-full"
+                className="group/link flex items-center gap-1 min-h-[44px] py-2 -my-2 hover:text-primary active:scale-99 transition-all text-left max-w-full touch-manipulation"
                 onClick={(e) => { e.stopPropagation(); openDisclosure(disclosure.corp_name, disclosure.report_nm); }}
               >
                 <span className="truncate"><GlossaryHighlight text={disclosure.report_nm} /></span>
