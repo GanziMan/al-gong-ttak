@@ -15,6 +15,8 @@ interface StockChartInnerProps {
 }
 
 export default function StockChartInner({ prices }: StockChartInnerProps) {
+  console.log("📊 Stock chart data:", prices);
+
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
@@ -43,8 +45,9 @@ export default function StockChartInner({ prices }: StockChartInnerProps) {
             type="monotone"
             dataKey="close"
             stroke="hsl(var(--primary))"
-            strokeWidth={2}
+            strokeWidth={3}
             dot={false}
+            activeDot={{ r: 4 }}
           />
         </LineChart>
       </ResponsiveContainer>
