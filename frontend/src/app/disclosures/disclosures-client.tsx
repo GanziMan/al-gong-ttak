@@ -83,8 +83,8 @@ function DisclosuresContent({ initialDisclosures }: DisclosuresClientProps) {
 
   const fetchDisclosures = useCallback(async (isPolling = false) => {
     if (!isLoggedIn) {
-      // 비로그인: 서버 초기데이터 우선 사용, 없으면 public API 폴백
-      if (initialDisclosures.length > 0) {
+      // 특정 종목 조회 시에는 ISR 데이터 대신 API에서 직접 가져오기
+      if (!corpCode && initialDisclosures.length > 0) {
         if (!isPolling) {
           setDisclosures(initialDisclosures);
           setPendingAnalysis(0);
@@ -96,9 +96,10 @@ function DisclosuresContent({ initialDisclosures }: DisclosuresClientProps) {
       if (!isPolling) {
         try {
           const data = await api.getPublicDisclosures({
-            days,
+            days: corpCode ? 30 : days,
             category: category === "all" ? undefined : category,
             min_score: minScore || undefined,
+            corp_code: corpCode || undefined,
           });
           setDisclosures(data.disclosures);
           setPendingAnalysis(data.pending_analysis);
@@ -156,6 +157,7 @@ function DisclosuresContent({ initialDisclosures }: DisclosuresClientProps) {
   }, [days, category, minScore, isLoggedIn, initialDisclosures]);
 
   useEffect(() => {
+    if (corpCode) setLoading(true);
     fetchDisclosures();
     const today = new Date();
     const yyyymmdd = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`;
@@ -163,7 +165,7 @@ function DisclosuresContent({ initialDisclosures }: DisclosuresClientProps) {
     if (isLoggedIn) {
       api.getBookmarks().then((data) => setBookmarks(data.bookmarks)).catch(() => {});
     }
-  }, [fetchDisclosures, isLoggedIn]);
+  }, [fetchDisclosures, isLoggedIn, corpCode]);
 
   // AI 분석 완료 감지
   useEffect(() => {

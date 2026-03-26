@@ -142,11 +142,12 @@ export const api = {
     );
   },
 
-  getPublicDisclosures: (params?: { days?: number; category?: string; min_score?: number }) => {
+  getPublicDisclosures: (params?: { days?: number; category?: string; min_score?: number; corp_code?: string }) => {
     const q = new URLSearchParams();
     if (params?.days) q.set("days", String(params.days));
     if (params?.category && params.category !== "all") q.set("category", params.category);
     if (params?.min_score) q.set("min_score", String(params.min_score));
+    if (params?.corp_code) q.set("corp_code", params.corp_code);
     const qs = q.toString();
     return request<{ disclosures: Disclosure[]; total: number; pending_analysis: number }>(
       `/api/disclosures/public${qs ? `?${qs}` : ""}`

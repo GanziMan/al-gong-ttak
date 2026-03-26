@@ -195,13 +195,24 @@ async def get_public_disclosures(
     now = datetime.now()
     today = now.strftime("%Y%m%d")
     start = (now - timedelta(days=days)).strftime("%Y%m%d")
-    cache_key = f"public_{start}_{today}"
 
-    # 캐시 확인
-    cached_list = await get_cached_disclosures(cache_key)
-    if cached_list is None:
-        cached_list = await dart_client.get_all_disclosures(bgn_de=start, end_de=today)
-        await set_cached_disclosures(cache_key, cached_list)
+    if corp_code:
+        # 특정 종목: DART API에 corp_code 직접 전달
+        cache_key = f"public_{corp_code}_{start}_{today}"
+        cached_list = await get_cached_disclosures(cache_key)
+        if cached_list is None:
+            data = await dart_client.get_disclosure_list(
+                corp_code=corp_code, bgn_de=start, end_de=today, page_count=100
+            )
+            cached_list = data.get("list", []) if data.get("status") == "000" else []
+            await set_cached_disclosures(cache_key, cached_list)
+    else:
+        # 전체 공시
+        cache_key = f"public_{start}_{today}"
+        cached_list = await get_cached_disclosures(cache_key)
+        if cached_list is None:
+            cached_list = await dart_client.get_all_disclosures(bgn_de=start, end_de=today)
+            await set_cached_disclosures(cache_key, cached_list)
 
     disclosures = list(cached_list)
 
@@ -226,8 +237,6 @@ async def get_public_disclosures(
 
     results = list(disclosures)
 
-    if corp_code:
-        results = [d for d in results if d.get("corp_code") == corp_code]
     if category:
         results = [d for d in results if d.get("analysis") and d["analysis"].get("category") == category]
     if min_score > 0:
