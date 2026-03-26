@@ -163,6 +163,10 @@
   * {
     -webkit-tap-highlight-color: transparent;
   }
+  /* 모바일 300ms tap delay 제거 */
+  a, button {
+    touch-action: manipulation;
+  }
   /* Recharts 클릭 시 focus outline 제거 */
   .recharts-surface,
   .recharts-surface:focus,

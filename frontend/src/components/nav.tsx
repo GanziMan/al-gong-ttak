@@ -103,8 +103,9 @@ export function Nav() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={true}
                   className={cn(
-                    "relative px-3.5 py-2 text-[13px] font-medium transition-colors rounded-lg",
+                    "relative px-3.5 py-2 text-[13px] font-medium transition-colors rounded-lg touch-manipulation",
                     pathname === link.href
                       ? "text-primary bg-primary/5"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent",
@@ -169,8 +170,9 @@ export function Nav() {
               <Link
                 key={tab.href}
                 href={tab.href}
+                prefetch={true}
                 className={cn(
-                  "relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[3.5rem] transition-colors",
+                  "relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[3.5rem] transition-colors touch-manipulation active:scale-95",
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
