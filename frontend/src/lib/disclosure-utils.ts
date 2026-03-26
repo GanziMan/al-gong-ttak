@@ -35,3 +35,23 @@ export function scoreColor(score: number) {
   if (score >= 20) return "text-blue-600 dark:text-blue-400";
   return "text-zinc-400 dark:text-zinc-500";
 }
+
+export function categoryLabel(category: string, score: number) {
+  if (category === "호재") {
+    if (score >= 80) return "강한 호재";
+    if (score >= 60) return "호재";
+    if (score >= 40) return "약한 호재";
+    return "중립(호재 가능)";
+  }
+  if (category === "악재") {
+    if (score >= 80) return "강한 악재";
+    if (score >= 60) return "악재";
+    if (score >= 40) return "약한 악재";
+    return "중립(악재 가능)";
+  }
+  if (category === "중립") {
+    if (score >= 70) return "중립(변동성 주의)";
+    return "중립";
+  }
+  return category;
+}

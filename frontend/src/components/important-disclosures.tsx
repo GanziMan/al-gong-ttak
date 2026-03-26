@@ -5,7 +5,7 @@ import { AlertTriangle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Disclosure } from "@/lib/api";
-import { categoryColor, categoryDot, formatDateShort, scoreColor } from "@/lib/disclosure-utils";
+import { categoryColor, categoryDot, categoryLabel, formatDateShort, scoreColor } from "@/lib/disclosure-utils";
 import { cn } from "@/lib/utils";
 
 interface ImportantDisclosuresProps {
@@ -34,6 +34,7 @@ export function ImportantDisclosures({ disclosures }: ImportantDisclosuresProps)
           {disclosures.map((d) => {
             const cat = d.analysis?.category || "단순정보";
             const score = d.analysis?.importance_score ?? 0;
+            const catLabel = categoryLabel(cat, score);
             return (
               <Link key={d.rcept_no} href={`/disclosures?corp_code=${d.corp_code}`} className="block group px-4 py-3 hover:bg-accent/50 transition-colors">
                 <div className="flex items-start justify-between gap-3">
@@ -61,7 +62,7 @@ export function ImportantDisclosures({ disclosures }: ImportantDisclosuresProps)
                       {score}
                     </span>
                     <Badge variant="outline" className={cn("text-[10px] rounded-md", categoryColor[cat])}>
-                      {cat}
+                      {catLabel}
                     </Badge>
                   </div>
                 </div>

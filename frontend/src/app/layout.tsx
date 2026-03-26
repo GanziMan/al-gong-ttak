@@ -19,8 +19,9 @@ const geistMono = Geist_Mono({
 
 const SITE_URL = "https://gongsittak.com";
 const SITE_NAME = "공시딱";
-const SITE_TITLE = "공시딱 | 공시, 알아서 공시 딱";
-const SITE_DESC = "DART 공시를 AI가 자동으로 분석하고 호재/악재를 판별해드립니다. 관심종목 추적, 오늘의 브리핑까지.";
+const SITE_TITLE = "공시딱 | 알아서 공시 딱";
+const SITE_DESC =
+  "DART 공시를 AI가 자동으로 분석하고 호재/악재를 판별해드립니다. 관심종목 추적, 오늘의 브리핑까지.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -30,12 +31,36 @@ export const metadata: Metadata = {
   },
   description: SITE_DESC,
   keywords: [
-    "공시 분석", "DART", "AI 공시", "주식 공시", "호재 악재",
-    "한국 주식", "공시 알림", "공시딱", "관심종목", "오늘의 브리핑",
-    "공시 필터링", "투자 정보", "금융 AI", "전자공시", "실시간 공시",
-    "공시 검색", "주가", "종목 분석", "투자 도구", "기업 공시",
-    "상장사 공시", "증권 정보", "재무제표", "사업보고서", "공시 자동화",
-    "AI 투자", "스마트 투자", "공시 요약", "중요 공시", "공시 트렌드",
+    "공시 분석",
+    "DART",
+    "AI 공시",
+    "주식 공시",
+    "호재 악재",
+    "한국 주식",
+    "공시 알림",
+    "공시딱",
+    "관심종목",
+    "오늘의 브리핑",
+    "공시 필터링",
+    "투자 정보",
+    "금융 AI",
+    "전자공시",
+    "실시간 공시",
+    "공시 검색",
+    "주가",
+    "종목 분석",
+    "투자 도구",
+    "기업 공시",
+    "상장사 공시",
+    "증권 정보",
+    "재무제표",
+    "사업보고서",
+    "공시 자동화",
+    "AI 투자",
+    "스마트 투자",
+    "공시 요약",
+    "중요 공시",
+    "공시 트렌드",
   ],
   authors: [{ name: SITE_NAME }],
   creator: SITE_NAME,
@@ -69,6 +94,14 @@ export const metadata: Metadata = {
   verification: {
     google: "Zl29et0mZnPrc2Zjwn8RJ3vjPez_FzrfQmrle9GuAbM",
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", type: "image/x-icon" },
+      { url: "/icon.png", type: "image/png", sizes: "128x128" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "128x128", type: "image/png" }],
+    shortcut: ["/favicon.ico"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -98,9 +131,10 @@ export default function RootLayout({
     <html
       lang="ko"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body suppressHydrationWarning className="min-h-full flex flex-col bg-background">
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col bg-background">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -110,7 +144,8 @@ export default function RootLayout({
               name: "공시딱",
               alternateName: "GONGSITTAK",
               url: "https://gongsittak.com",
-              description: "DART 공시를 AI가 자동으로 분석하고 호재/악재를 판별해드립니다.",
+              description:
+                "DART 공시를 AI가 자동으로 분석하고 호재/악재를 판별해드립니다.",
               applicationCategory: "FinanceApplication",
               operatingSystem: "Web",
               offers: {
@@ -131,8 +166,7 @@ export default function RootLayout({
         </Script>
         <Script
           id="theme-init"
-          strategy="beforeInteractive"
-        >{`(function(){try{var d=document.documentElement;var t=localStorage.getItem('theme');if(t==='dark'){d.classList.add('dark')}}catch(e){}})()`}</Script>
+          strategy="beforeInteractive">{`(function(){try{var d=document.documentElement;var t=localStorage.getItem('theme');if(t==='dark'){d.classList.add('dark')}}catch(e){}})()`}</Script>
         <SwRegister />
         <AuthProvider>
           <Nav />

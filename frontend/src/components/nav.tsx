@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -35,7 +35,7 @@ const guestTabs = [
 ];
 
 const authTabs = [
-  { href: "/", label: "홈", icon: LayoutDashboard },
+  { href: "/", label: "대시보드", icon: LayoutDashboard },
   { href: "/disclosures", label: "공시", icon: FileText },
   { href: "/watchlist", label: "관심", icon: Star },
   { href: "/settings", label: "설정", icon: Settings },
@@ -44,13 +44,22 @@ const authTabs = [
 export function Nav() {
   const pathname = usePathname();
   const { user, isLoggedIn, logout } = useAuth();
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== "undefined"
+      ? document.documentElement.classList.contains("dark")
+      : false
+  );
   const [badgeCount, setBadgeCount] = useState(0);
+  const lastFetchRef = useRef(0);
 
   const activeLinks = isLoggedIn ? authLinks : guestLinks;
   const activeTabs = isLoggedIn ? authTabs : guestTabs;
 
-  const lastFetchRef = { current: 0 };
+  const isActive = useCallback((href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }, [pathname]);
+
   const fetchCount = useCallback(async () => {
     try {
       if (!isLoggedIn) return;
@@ -67,7 +76,6 @@ export function Nav() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
     fetchCount();
     const interval = setInterval(fetchCount, 300_000);
     const onVisibility = () => {
@@ -106,7 +114,7 @@ export function Nav() {
                   prefetch={true}
                   className={cn(
                     "relative px-3.5 py-2 text-[13px] font-medium transition-colors rounded-lg touch-manipulation",
-                    pathname === link.href
+                    isActive(link.href)
                       ? "text-primary bg-primary/5"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent",
                   )}
@@ -165,7 +173,7 @@ export function Nav() {
         <div className="flex items-stretch">
           {activeTabs.map((tab) => {
             const Icon = tab.icon;
-            const active = pathname === tab.href;
+            const active = isActive(tab.href);
             return (
               <Link
                 key={tab.href}

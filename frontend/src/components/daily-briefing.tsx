@@ -5,6 +5,7 @@ import { Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import Link from "next/link";
 import { api, getCached, setCache, isFresh, type DailyBriefing as BriefingType } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import { categoryColor, categoryLabel } from "@/lib/disclosure-utils";
 import { cn } from "@/lib/utils";
 
 export function DailyBriefing() {
@@ -59,11 +60,10 @@ export function DailyBriefing() {
                     variant="outline"
                     className={cn(
                       "text-[9px] rounded-md px-1 py-0",
-                      d.category === "호재" && "border-green-500/30 text-green-600",
-                      d.category === "악재" && "border-red-500/30 text-red-600",
+                      categoryColor[d.category] || "border-zinc-300 text-zinc-600",
                     )}
                   >
-                    {d.category}
+                    {categoryLabel(d.category, d.importance_score)}
                   </Badge>
                   <span className="font-medium text-foreground/80 truncate">
                     {d.corp_name}
