@@ -7,8 +7,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 async function getPublicDisclosures(): Promise<Disclosure[]> {
   try {
-    // 30일(최대 범위) 전체를 가져와서 클라이언트에서 날짜/카테고리/점수 필터링
-    const res = await fetch(`${API_BASE}/api/disclosures/public?days=30`, {
+    // 7일치 공시를 가져와서 클라이언트에서 날짜/카테고리/점수 필터링
+    const res = await fetch(`${API_BASE}/api/disclosures/public?days=7`, {
       cache: 'no-store',
     });
     if (!res.ok) return [];

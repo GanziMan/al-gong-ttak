@@ -16,11 +16,23 @@ interface StockChartInnerProps {
 
 export default function StockChartInner({ prices }: StockChartInnerProps) {
   console.log("📊 Stock chart data:", prices);
+  console.log("📊 Sample data point:", prices[0]);
+  console.log("📊 Close value type:", typeof prices[0]?.close);
+  console.log("📊 Data length:", prices.length);
+
+  // Ensure close values are numbers (handle potential string serialization)
+  const chartData = prices.map((p) => ({
+    ...p,
+    close: Number(p.close),
+    open: Number(p.open),
+    high: Number(p.high),
+    low: Number(p.low),
+  }));
 
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-        <LineChart data={prices}>
+        <LineChart data={chartData}>
           <XAxis
             dataKey="date"
             tick={{ fontSize: 10 }}
@@ -28,7 +40,7 @@ export default function StockChartInner({ prices }: StockChartInnerProps) {
           />
           <YAxis
             tick={{ fontSize: 10 }}
-            domain={["dataMin", "dataMax"]}
+            domain={["dataMin - 100", "dataMax + 100"]}
             tickFormatter={(v: number) => v.toLocaleString()}
           />
           <Tooltip
@@ -46,8 +58,9 @@ export default function StockChartInner({ prices }: StockChartInnerProps) {
             dataKey="close"
             stroke="hsl(var(--primary))"
             strokeWidth={3}
-            dot={false}
-            activeDot={{ r: 4 }}
+            dot={true}
+            activeDot={{ r: 6 }}
+            isAnimationActive={false}
           />
         </LineChart>
       </ResponsiveContainer>
