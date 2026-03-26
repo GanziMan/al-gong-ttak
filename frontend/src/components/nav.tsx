@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
+import { QuickSearch } from "@/components/quick-search";
 
 const guestLinks = [
   { href: "/", label: "홈" },
@@ -143,6 +144,10 @@ export function Nav() {
             </nav>
           </div>
           <div className="flex items-center gap-2.5">
+            {/* 빠른 검색 */}
+            <div className="hidden sm:block">
+              <QuickSearch />
+            </div>
             {isLoggedIn ? (
               <div className="hidden sm:flex items-center gap-2">
                 <span className="text-[12px] font-medium text-foreground">
