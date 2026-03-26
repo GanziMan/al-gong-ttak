@@ -189,6 +189,7 @@ async def get_public_disclosures(
     days: int = Query(7, ge=1, le=30),
     category: str = Query(None, description="호재/악재/중립/단순정보"),
     min_score: int = Query(0, ge=0, le=100),
+    corp_code: str = Query(None, description="특정 기업 코드로 필터링"),
 ):
     dart_client = DartClient(api_key=settings.dart_api_key)
     now = datetime.now()
@@ -225,6 +226,8 @@ async def get_public_disclosures(
 
     results = list(disclosures)
 
+    if corp_code:
+        results = [d for d in results if d.get("corp_code") == corp_code]
     if category:
         results = [d for d in results if d.get("analysis") and d["analysis"].get("category") == category]
     if min_score > 0:
@@ -279,6 +282,7 @@ async def get_disclosures(
     days: int = Query(7, ge=1, le=30),
     category: str = Query(None, description="호재/악재/중립/단순정보"),
     min_score: int = Query(0, ge=0, le=100),
+    corp_code: str = Query(None, description="특정 기업 코드로 필터링"),
     user: User = Depends(get_current_user),
 ):
     dart_client = DartClient(api_key=settings.dart_api_key)
@@ -305,6 +309,8 @@ async def get_disclosures(
 
     results = list(disclosures)
 
+    if corp_code:
+        results = [d for d in results if d.get("corp_code") == corp_code]
     if category:
         results = [
             d for d in results
