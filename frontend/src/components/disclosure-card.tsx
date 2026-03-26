@@ -131,10 +131,12 @@ export function DisclosureCard({
                     )}>
                     {catLabel}
                   </Badge>
-                  <PriceImpactBadge
-                    rceptNo={disclosure.rcept_no}
-                    visible={expanded}
-                  />
+                  <span className="hidden sm:inline-flex">
+                    <PriceImpactBadge
+                      rceptNo={disclosure.rcept_no}
+                      visible={expanded}
+                    />
+                  </span>
                 </div>
                 {showScore && (
                   <span
@@ -161,6 +163,14 @@ export function DisclosureCard({
             <p className="text-[12px] leading-relaxed text-muted-foreground/70">
               <GlossaryHighlight text={analysis.action_item} />
             </p>
+
+            {/* Mobile price impact */}
+            <div className="sm:hidden mt-2">
+              <PriceImpactBadge
+                rceptNo={disclosure.rcept_no}
+                visible={expanded}
+              />
+            </div>
 
             {/* Expandable AI summary */}
             {expanded && (
