@@ -1,6 +1,8 @@
 import { DashboardSummary, Disclosure } from "@/lib/api";
 import { HomeClient } from "./home-client";
 
+export const dynamic = 'force-dynamic';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 async function getPublicData(): Promise<{
