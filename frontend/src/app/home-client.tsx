@@ -93,11 +93,11 @@ function Dashboard() {
 }
 
 interface HomeClientProps {
-  summary: DashboardSummary | null;
-  disclosures: Disclosure[];
+  summary?: DashboardSummary | null;
+  disclosures?: Disclosure[];
 }
 
-export function HomeClient({ summary, disclosures }: HomeClientProps) {
+export function HomeClient({ summary, disclosures }: HomeClientProps = {}) {
   const { isLoggedIn, isLoading } = useAuth();
 
   // 로딩 중이더라도 SSG 데이터가 있으면 Landing을 바로 보여줌 (비로그인 유저 UX)
