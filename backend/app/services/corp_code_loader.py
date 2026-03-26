@@ -126,6 +126,10 @@ async def search_corps(keyword: str) -> List[Dict]:
     if cached and now - cached[1] < _SEARCH_CACHE_TTL:
         return cached[0]
 
+    # 예외적으로 버킷 인덱스가 비어있으면 즉시 재구축 (초기화/핫리로드 안전장치)
+    if _corps_cache and not _prefix_buckets:
+        _rebuild_corp_maps()
+
     tokens = [t for t in normalized.split(" ") if t]
     if not tokens:
         return []
@@ -201,5 +205,9 @@ async def search_corps(keyword: str) -> List[Dict]:
 
     scored.sort(key=lambda x: (-x[0], x[1]["corp_name"]))
     results = [c for _, c in scored[:20]]
-    _search_cache[normalized] = (results, now)
+    # 빈 결과는 캐시하지 않아 초기 일시 오류/데이터 지연 시 회복을 막지 않도록 함
+    if results:
+        _search_cache[normalized] = (results, now)
+    else:
+        _search_cache.pop(normalized, None)
     return results

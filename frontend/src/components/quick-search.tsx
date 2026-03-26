@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { api, Corp } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-const searchCache = new Map<string, Corp[]>();
+const searchCache = new Map<string, { data: Corp[]; ts: number }>();
+const SEARCH_CACHE_TTL = 60_000;
 
 export function QuickSearch() {
   const router = useRouter();
@@ -27,9 +28,9 @@ export function QuickSearch() {
     }
 
     const cached = searchCache.get(normalizedQuery);
-    if (cached) {
-      setResults(cached);
-      setOpen(cached.length > 0);
+    if (cached && Date.now() - cached.ts < SEARCH_CACHE_TTL && cached.data.length > 0) {
+      setResults(cached.data);
+      setOpen(cached.data.length > 0);
       return;
     }
 
@@ -37,7 +38,11 @@ export function QuickSearch() {
       setLoading(true);
       try {
         const data = await api.searchCorps(normalizedQuery);
-        searchCache.set(normalizedQuery, data.results);
+        if (data.results.length > 0) {
+          searchCache.set(normalizedQuery, { data: data.results, ts: Date.now() });
+        } else {
+          searchCache.delete(normalizedQuery);
+        }
         setResults(data.results);
         setOpen(data.results.length > 0);
       } catch {

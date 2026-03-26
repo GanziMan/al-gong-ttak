@@ -11,7 +11,8 @@ interface SearchModalProps {
   onClose: () => void;
 }
 
-const searchCache = new Map<string, Corp[]>();
+const searchCache = new Map<string, { data: Corp[]; ts: number }>();
+const SEARCH_CACHE_TTL = 60_000;
 
 export function SearchModal({ open, onClose }: SearchModalProps) {
   const router = useRouter();
@@ -44,8 +45,8 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     }
 
     const cached = searchCache.get(normalizedQuery);
-    if (cached) {
-      setResults(cached);
+    if (cached && Date.now() - cached.ts < SEARCH_CACHE_TTL && cached.data.length > 0) {
+      setResults(cached.data);
       return;
     }
 
@@ -53,7 +54,11 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       setLoading(true);
       try {
         const data = await api.searchCorps(normalizedQuery);
-        searchCache.set(normalizedQuery, data.results);
+        if (data.results.length > 0) {
+          searchCache.set(normalizedQuery, { data: data.results, ts: Date.now() });
+        } else {
+          searchCache.delete(normalizedQuery);
+        }
         setResults(data.results);
       } catch {
         setResults([]);
