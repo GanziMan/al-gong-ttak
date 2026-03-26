@@ -6,6 +6,8 @@ import {
   ArrowRight,
   BarChart3,
   BrainCircuit,
+  BookmarkCheck,
+  LineChart,
   Shield,
   Star,
 } from "lucide-react";
@@ -17,21 +19,35 @@ const features = [
   {
     icon: BrainCircuit,
     title: "AI 공시 분석",
-    desc: "상장기업의 공시(기업 발표 보고서)를 자동 분류하고 중요도를 평가합니다",
+    desc: "상장기업 공시를 AI가 자동 분류하고 호재/악재를 판별합니다",
     color: "text-violet-500",
     bg: "bg-violet-500/10",
   },
   {
+    icon: LineChart,
+    title: "재무제표 & 주가",
+    desc: "매출, 영업이익, 배당 내역과 주가 차트를 한눈에 확인합니다",
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+  },
+  {
     icon: Star,
-    title: "관심종목 + 알림",
-    desc: "관심 종목을 추적하고 텔레그램으로 중요 공시 알림을 받습니다",
+    title: "관심종목 & 브리핑",
+    desc: "관심 종목의 공시만 모아보고 매일 AI 브리핑을 받아보세요",
     color: "text-amber-500",
     bg: "bg-amber-500/10",
   },
   {
+    icon: BookmarkCheck,
+    title: "북마크 & 메모",
+    desc: "중요한 공시를 북마크하고 나만의 메모를 남길 수 있습니다",
+    color: "text-sky-500",
+    bg: "bg-sky-500/10",
+  },
+  {
     icon: BarChart3,
     title: "공시 추이 분석",
-    desc: "기간별 공시 건수와 중요도 트렌드를 차트로 확인합니다",
+    desc: "30일간 공시 건수와 중요도 트렌드를 차트로 추적합니다",
     color: "text-rose-500",
     bg: "bg-rose-500/10",
   },
@@ -42,10 +58,19 @@ interface LandingProps {
   disclosures?: Disclosure[];
 }
 
-export function Landing({ summary: initialSummary, disclosures: initialDisclosures }: LandingProps = {}) {
-  const hasServerData = initialSummary != null || (initialDisclosures && initialDisclosures.length > 0);
-  const [summary, setSummary] = useState<DashboardSummary | null>(initialSummary ?? null);
-  const [disclosures, setDisclosures] = useState<Disclosure[]>(initialDisclosures ?? []);
+export function Landing({
+  summary: initialSummary,
+  disclosures: initialDisclosures,
+}: LandingProps = {}) {
+  const hasServerData =
+    initialSummary != null ||
+    (initialDisclosures && initialDisclosures.length > 0);
+  const [summary, setSummary] = useState<DashboardSummary | null>(
+    initialSummary ?? null,
+  );
+  const [disclosures, setDisclosures] = useState<Disclosure[]>(
+    initialDisclosures ?? [],
+  );
   const [loading, setLoading] = useState(!hasServerData);
 
   // 서버 데이터 없으면 클라이언트 fetch
@@ -60,8 +85,12 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
         setSummary({
           ...dashData,
           today_disclosures: discData.total,
-          bullish: discData.disclosures.filter((d) => d.analysis?.category === "호재").length,
-          bearish: discData.disclosures.filter((d) => d.analysis?.category === "악재").length,
+          bullish: discData.disclosures.filter(
+            (d) => d.analysis?.category === "호재",
+          ).length,
+          bearish: discData.disclosures.filter(
+            (d) => d.analysis?.category === "악재",
+          ).length,
         });
         setDisclosures(discData.disclosures.slice(0, 10));
       } catch {
@@ -90,12 +119,20 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
         const data = await api.getPublicDisclosures({ days: 3 });
         const fresh = data.disclosures.slice(0, 10);
         setDisclosures(fresh);
-        setSummary((prev) => prev ? {
-          ...prev,
-          today_disclosures: data.total,
-          bullish: data.disclosures.filter((d) => d.analysis?.category === "호재").length,
-          bearish: data.disclosures.filter((d) => d.analysis?.category === "악재").length,
-        } : prev);
+        setSummary((prev) =>
+          prev
+            ? {
+                ...prev,
+                today_disclosures: data.total,
+                bullish: data.disclosures.filter(
+                  (d) => d.analysis?.category === "호재",
+                ).length,
+                bearish: data.disclosures.filter(
+                  (d) => d.analysis?.category === "악재",
+                ).length,
+              }
+            : prev,
+        );
       } catch {
         // silent
       }
@@ -135,8 +172,7 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
           <div className="mt-10 pb-5">
             <Link
               href="/disclosures"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20"
-            >
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20">
               공시 보러가기
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -146,19 +182,42 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
 
       {/* 실시간 요약 */}
       <section className="grid grid-cols-3 gap-3">
-        <Link prefetch={true} href={{ pathname: "/disclosures", query: { days: "3" } }} className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
-          <p className="text-[10px] font-medium text-muted-foreground">최근 3일 공시</p>
-          <p className="text-2xl font-black text-foreground mt-1">{summary?.today_disclosures ?? "-"}</p>
+        <Link
+          prefetch={true}
+          href={{ pathname: "/disclosures", query: { days: "3" } }}
+          className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
+          <p className="text-[10px] font-medium text-muted-foreground">
+            최근 3일 공시
+          </p>
+          <p className="text-2xl font-black text-foreground mt-1">
+            {summary?.today_disclosures ?? "-"}
+          </p>
           <p className="text-[10px] text-muted-foreground/60 mt-0.5">건</p>
         </Link>
-        <Link prefetch={true} href={{ pathname: "/disclosures", query: { days: "3", category: "호재" } }} className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
+        <Link
+          prefetch={true}
+          href={{
+            pathname: "/disclosures",
+            query: { days: "3", category: "호재" },
+          }}
+          className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
           <p className="text-[10px] font-medium text-muted-foreground">호재</p>
-          <p className="text-2xl font-black text-emerald-500 mt-1">{summary?.bullish ?? "-"}</p>
+          <p className="text-2xl font-black text-emerald-500 mt-1">
+            {summary?.bullish ?? "-"}
+          </p>
           <p className="text-[10px] text-muted-foreground/60 mt-0.5">건</p>
         </Link>
-        <Link prefetch={true} href={{ pathname: "/disclosures", query: { days: "3", category: "악재" } }} className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
+        <Link
+          prefetch={true}
+          href={{
+            pathname: "/disclosures",
+            query: { days: "3", category: "악재" },
+          }}
+          className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
           <p className="text-[10px] font-medium text-muted-foreground">악재</p>
-          <p className="text-2xl font-black text-red-500 mt-1">{summary?.bearish ?? "-"}</p>
+          <p className="text-2xl font-black text-red-500 mt-1">
+            {summary?.bearish ?? "-"}
+          </p>
           <p className="text-[10px] text-muted-foreground/60 mt-0.5">건</p>
         </Link>
       </section>
@@ -167,7 +226,9 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">최신 AI 분석 공시</h2>
-          <Link href="/disclosures" className="text-xs text-primary hover:underline">
+          <Link
+            href="/disclosures"
+            className="text-xs text-primary hover:underline">
             전체보기 →
           </Link>
         </div>
@@ -184,7 +245,9 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-8">공시 데이터가 없습니다</p>
+          <p className="text-sm text-muted-foreground text-center py-8">
+            공시 데이터가 없습니다
+          </p>
         )}
       </section>
 
@@ -199,15 +262,13 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => (
             <div
               key={f.title}
-              className="glass-card rounded-2xl p-5 transition-all hover:scale-[1.02] hover:shadow-lg group"
-            >
+              className={`glass-card rounded-2xl p-5 transition-all hover:scale-[1.02] hover:shadow-lg group ${i === 0 ? "col-span-2 lg:col-span-1" : ""}`}>
               <div
-                className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${f.bg} mb-4 transition-transform group-hover:scale-110`}
-              >
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${f.bg} mb-4 transition-transform group-hover:scale-110`}>
                 <f.icon className={`h-5 w-5 ${f.color}`} />
               </div>
               <h3 className="text-sm font-bold text-foreground">{f.title}</h3>
@@ -226,15 +287,15 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
           <div className="relative">
             <Shield className="h-10 w-10 text-primary/40 mx-auto mb-4" />
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              더 많은 기능이 필요하신가요?
+              나만의 공시 대시보드를 만들어보세요
             </h2>
             <p className="mt-3 text-sm text-muted-foreground max-w-sm mx-auto">
-              로그인하면 관심종목 저장, 오늘의 브리핑, 북마크 등을 사용할 수 있어요
+              무료로 관심종목 등록, AI 브리핑, 북마크 메모, 재무제표 비교까지 —
+              로그인하면 모든 기능을 이용할 수 있어요
             </p>
             <Link
               href={`/login`}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border px-6 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted mt-6"
-            >
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border px-6 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted mt-6">
               로그인하기
             </Link>
           </div>
