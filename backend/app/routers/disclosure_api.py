@@ -80,8 +80,8 @@ async def _enrich_one(d: dict) -> dict:
         fallback = {
             "category": "단순정보",
             "importance_score": 0,
-            "summary": "AI 분석을 수행할 수 없습니다.",
-            "action_item": "원문을 직접 확인하세요.",
+            "summary": "공시 핵심 항목을 자동 요약하지 못했습니다. 제목과 접수일 기준 기본 정보만 제공됩니다.",
+            "action_item": "공시 원문의 재무 수치·자금조달 조건·확정 여부를 우선 확인하세요.",
         }
         if rcept_no:
             await save_analysis(rcept_no, fallback, metadata={

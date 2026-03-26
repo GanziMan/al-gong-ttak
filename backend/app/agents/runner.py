@@ -56,9 +56,9 @@ async def analyze_disclosure(corp_name: str, title: str, content: str) -> dict:
 
     # fallback: 텍스트 응답 반환
     return {
-        "category": "분석 실패",
+        "category": "단순정보",
         "importance_score": 0,
-        "summary": response_text[:200] if response_text else "응답 없음",
-        "action_item": "수동 확인 필요",
+        "summary": response_text[:200] if response_text else "공시 핵심 정보 추출이 지연되었습니다. 기본 공시 정보만 제공합니다.",
+        "action_item": "공시 원문에서 금액·비율·확정 여부를 먼저 확인한 뒤 판단하세요.",
         "raw_response": response_text,
     }
