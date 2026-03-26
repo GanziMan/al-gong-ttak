@@ -1,4 +1,4 @@
-const CACHE_NAME = "alzalttak-v1";
+const CACHE_NAME = "alzalttak-v2";
 const STATIC_ASSETS = ["/", "/disclosures", "/watchlist"];
 
 // Install: 기본 페이지 캐시
@@ -26,8 +26,16 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // API 요청은 캐시하지 않음
-  if (url.pathname.startsWith("/api/") || request.method !== "GET") return;
+  // 확장 프로그램(chrome-extension://), about:, data: 등은 처리하지 않음
+  if (!(url.protocol === "http:" || url.protocol === "https:")) return;
+  // API 요청/비GET/외부 오리진은 캐시하지 않음
+  if (
+    url.pathname.startsWith("/api/") ||
+    request.method !== "GET" ||
+    url.origin !== self.location.origin
+  ) {
+    return;
+  }
 
   event.respondWith(
     fetch(request)
@@ -35,7 +43,12 @@ self.addEventListener("fetch", (event) => {
         // 성공 시 캐시 업데이트
         if (response.ok) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.put(request, clone))
+            .catch(() => {
+              // 캐시 실패는 네트워크 응답에 영향 주지 않음
+            });
         }
         return response;
       })
