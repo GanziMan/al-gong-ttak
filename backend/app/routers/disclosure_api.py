@@ -223,10 +223,20 @@ async def get_public_disclosures(
         cache_key = f"public_{corp_code}_{start}_{today}"
         cached_list = await get_cached_disclosures(cache_key)
         if cached_list is None:
-            data = await dart_client.get_disclosure_list(
-                corp_code=corp_code, bgn_de=start, end_de=today, page_count=100
-            )
-            cached_list = data.get("list", []) if data.get("status") == "000" else []
+            try:
+                data = await dart_client.get_disclosure_list(
+                    corp_code=corp_code, bgn_de=start, end_de=today, page_count=100
+                )
+                cached_list = data.get("list", []) if data.get("status") == "000" else []
+            except Exception:
+                logger.exception("Public disclosures corp_code query failed: %s", corp_code)
+                # 폴백: 전체 공시 조회 후 corp_code 필터
+                try:
+                    all_list = await dart_client.get_all_disclosures(bgn_de=start, end_de=today)
+                    cached_list = [d for d in all_list if d.get("corp_code") == corp_code]
+                except Exception:
+                    logger.exception("Public disclosures fallback(all->filter) failed: %s", corp_code)
+                    cached_list = []
             await set_cached_disclosures(cache_key, cached_list)
     else:
         # 전체 공시
