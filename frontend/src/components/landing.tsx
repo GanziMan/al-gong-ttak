@@ -140,21 +140,21 @@ export function Landing({ summary: initialSummary, disclosures: initialDisclosur
 
       {/* 실시간 요약 */}
       <section className="grid grid-cols-3 gap-3">
-        <div className="glass-card rounded-2xl p-4 text-center">
+        <Link href={{ pathname: "/disclosures", query: { days: "7" } }} className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
           <p className="text-[10px] font-medium text-muted-foreground">최근 7일 공시</p>
           <p className="text-2xl font-black text-foreground mt-1">{summary?.today_disclosures ?? "-"}</p>
           <p className="text-[10px] text-muted-foreground/60 mt-0.5">건</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4 text-center">
+        </Link>
+        <Link href={{ pathname: "/disclosures", query: { days: "7", category: "호재" } }} className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
           <p className="text-[10px] font-medium text-muted-foreground">호재</p>
           <p className="text-2xl font-black text-emerald-500 mt-1">{summary?.bullish ?? "-"}</p>
           <p className="text-[10px] text-muted-foreground/60 mt-0.5">건</p>
-        </div>
-        <div className="glass-card rounded-2xl p-4 text-center">
+        </Link>
+        <Link href={{ pathname: "/disclosures", query: { days: "7", category: "악재" } }} className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
           <p className="text-[10px] font-medium text-muted-foreground">악재</p>
           <p className="text-2xl font-black text-red-500 mt-1">{summary?.bearish ?? "-"}</p>
           <p className="text-[10px] text-muted-foreground/60 mt-0.5">건</p>
-        </div>
+        </Link>
       </section>
 
       {/* 최신 AI 분석 공시 */}
