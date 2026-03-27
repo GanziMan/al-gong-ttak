@@ -186,9 +186,20 @@ export default function RootLayout({
             <div className="mx-auto max-w-7xl">{children}</div>
           </main>
           <div className="px-4 pb-3 sm:px-6 lg:px-8">
-            <p className="mx-auto max-w-7xl text-[11px] leading-relaxed text-muted-foreground/70">
-              본 서비스의 정보와 AI 분석은 투자 참고용으로만 제공됩니다. 모든 투자 판단과 그에 따른 책임은 이용자 본인에게 있습니다.
-            </p>
+            <div className="mx-auto max-w-7xl space-y-2">
+              <p className="text-[11px] leading-relaxed text-muted-foreground/70">
+                본 서비스의 정보와 AI 분석은 투자 참고용으로만 제공됩니다. 모든 투자 판단과 그에 따른 책임은 이용자 본인에게 있습니다.
+              </p>
+              <p className="sm:hidden text-[11px] text-muted-foreground/60">
+                <Link href="/privacy" className="hover:text-foreground transition-colors">
+                  개인정보처리방침
+                </Link>
+                {" · "}
+                <Link href="/terms" className="hover:text-foreground transition-colors">
+                  이용약관
+                </Link>
+              </p>
+            </div>
           </div>
           <footer className="hidden sm:block border-t border-border py-4 text-center">
             <div className="space-y-1">
