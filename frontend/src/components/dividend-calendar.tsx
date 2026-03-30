@@ -67,10 +67,14 @@ export function DividendCalendar({ events }: DividendCalendarProps) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-[13px] font-semibold text-foreground">{event.corp_name}</p>
                         <span className="text-[11px] text-primary/70">{event.stock_code}</span>
-                        <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300">
+                        <span
+                          className={`rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300 whitespace-nowrap ${
+                            statusLabel === "확인 필요" ? "hidden sm:inline-flex" : "inline-flex"
+                          }`}
+                        >
                           {statusLabel}
                         </span>
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${change.className}`}>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap ${change.className}`}>
                           {change.label}
                         </span>
                       </div>

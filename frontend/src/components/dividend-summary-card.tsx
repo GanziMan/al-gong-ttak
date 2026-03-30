@@ -63,10 +63,14 @@ export function DividendSummaryCard({ event, corpName, stockCode }: DividendSumm
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300">
+          <span
+            className={`rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300 whitespace-nowrap ${
+              statusLabel === "미정" ? "hidden sm:inline-flex" : "inline-flex"
+            }`}
+          >
             {statusLabel === "미정" ? "확인 필요" : statusLabel}
           </span>
-          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${change.className}`}>
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap ${change.className}`}>
             {change.label}
           </span>
         </div>
