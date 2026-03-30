@@ -158,6 +158,8 @@ export const api = {
   // 기업 검색
   searchCorps: (q: string) =>
     request<{ results: Corp[] }>(`/api/corps/search?q=${encodeURIComponent(q)}`),
+  searchCorpPreview: (q: string) =>
+    request<{ results: CorpSearchPreview[] }>(`/api/corps/search-preview?q=${encodeURIComponent(q)}`),
 
   // 관심종목
   getWatchlist: () => request<{ watchlist: WatchlistItem[] }>("/api/watchlist"),
@@ -320,6 +322,13 @@ export interface Corp {
   corp_code: string;
   corp_name: string;
   stock_code: string;
+}
+
+export interface CorpSearchPreview extends Corp {
+  recent_disclosure_count: number;
+  recent_dps: number;
+  source_year: string;
+  change_vs_prev_year: "increase" | "flat" | "decrease" | "no_dividend" | "new" | "unknown";
 }
 
 export interface WatchlistItem {

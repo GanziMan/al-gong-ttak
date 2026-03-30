@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 
 const SITE_URL = "https://gongsittak.com";
 const SITE_NAME = "공시딱";
-const SITE_TITLE = "공시딱 | AI 공시 분석과 배당 기준일";
+const SITE_TITLE = "공시딱 | 알아서 공시 딱";
 const SITE_DESC =
   "DART 공시를 AI로 빠르게 요약하고, 종목별 배당 기준일 이력과 재무 흐름까지 한눈에 확인하는 한국 주식 분석 서비스입니다.";
 
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: SITE_TITLE,
-    template: `%s | ${SITE_NAME}`,
+    template: `${SITE_NAME} | %s`,
   },
   description: SITE_DESC,
   keywords: [

@@ -4,20 +4,29 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { api, Corp } from "@/lib/api";
+import { api, CorpSearchPreview } from "@/lib/api";
 
 interface SearchModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-const searchCache = new Map<string, { data: Corp[]; ts: number }>();
+const searchCache = new Map<string, { data: CorpSearchPreview[]; ts: number }>();
 const SEARCH_CACHE_TTL = 60_000;
+
+function formatDividendChange(change: CorpSearchPreview["change_vs_prev_year"]) {
+  if (change === "increase") return "증액";
+  if (change === "flat") return "동결";
+  if (change === "decrease") return "감액";
+  if (change === "no_dividend") return "무배당";
+  if (change === "new") return "신규";
+  return "변화 미확인";
+}
 
 export function SearchModal({ open, onClose }: SearchModalProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Corp[]>([]);
+  const [results, setResults] = useState<CorpSearchPreview[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const normalizedQuery = query.trim().replace(/\s+/g, " ");
@@ -53,7 +62,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const data = await api.searchCorps(normalizedQuery);
+        const data = await api.searchCorpPreview(normalizedQuery);
         if (data.results.length > 0) {
           searchCache.set(normalizedQuery, { data: data.results, ts: Date.now() });
         } else {
@@ -70,7 +79,13 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     return () => clearTimeout(timer);
   }, [normalizedQuery]);
 
-  const handleSelect = (corp: Corp) => {
+  const handleCompanySelect = (corp: CorpSearchPreview) => {
+    router.push(`/company/${corp.corp_code}`);
+    onClose();
+    window.scrollTo(0, 0);
+  };
+
+  const handleDisclosureSelect = (corp: CorpSearchPreview) => {
     router.push(`/disclosures?corp_code=${corp.corp_code}&corp_name=${encodeURIComponent(corp.corp_name)}`);
     onClose();
     window.scrollTo(0, 0);
@@ -146,40 +161,42 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           <div className="flex-1 overflow-y-auto -mx-4 px-4">
             <div className="space-y-2">
               {results.map((corp) => (
-                <button
+                <div
                   key={corp.corp_code}
-                  onClick={() => handleSelect(corp)}
-                  className="w-full glass-card rounded-2xl p-4 hover:bg-accent/50 active:scale-98 transition-all touch-manipulation"
+                  className="glass-card rounded-2xl p-4"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 text-left">
-                      <p className="font-semibold text-foreground text-base">
-                        {corp.corp_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground/60 mt-0.5">
-                        {corp.corp_code}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-mono text-primary/80">
-                        {corp.stock_code}
-                      </span>
-                      <svg
-                        className="h-5 w-5 text-muted-foreground/30"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      onClick={() => handleCompanySelect(corp)}
+                      className="min-w-0 flex-1 text-left rounded-xl px-1 py-1 transition-colors hover:bg-accent/40"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-foreground text-base">
+                            {corp.corp_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground/60 mt-0.5">
+                            {corp.corp_code}
+                          </p>
+                        </div>
+                        <span className="text-sm font-mono text-primary/80 shrink-0">
+                          {corp.stock_code}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+                        <span>최근 공시 {corp.recent_disclosure_count}건</span>
+                        <span>DPS {corp.recent_dps > 0 ? corp.recent_dps.toLocaleString() : "-"}</span>
+                        <span>{formatDividendChange(corp.change_vs_prev_year)}</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleDisclosureSelect(corp)}
+                      className="shrink-0 rounded-xl border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      공시
+                    </button>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </div>

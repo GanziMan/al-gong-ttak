@@ -77,3 +77,14 @@ export const getPublicDisclosuresData = cache(async (days: number): Promise<{
     pendingAnalysis: data.pending_analysis ?? 0,
   };
 });
+
+export const getPublicDividendData = cache(async (limit = 18): Promise<{
+  events: DividendCalendarEvent[];
+} | null> => {
+  const data = await fetchJson<{ events: DividendCalendarEvent[] }>(
+    `/api/dividends/public/preview?limit=${limit}&v=${DIVIDEND_CACHE_VERSION}`,
+    300,
+  );
+  if (!data) return null;
+  return { events: data.events };
+});

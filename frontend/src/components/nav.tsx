@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   FileText,
   Star,
+  CalendarDays,
   Settings,
   LogIn,
   Search,
@@ -21,11 +22,13 @@ import { SearchModal } from "@/components/search-modal";
 
 const guestLinks = [
   { href: "/", label: "홈" },
+  { href: "/dividends", label: "배당" },
   { href: "/disclosures", label: "공시" },
 ];
 
 const authLinks = [
   { href: "/", label: "대시보드" },
+  { href: "/dividends", label: "배당" },
   { href: "/watchlist", label: "관심종목" },
   { href: "/disclosures", label: "공시" },
   { href: "/settings", label: "설정" },
@@ -33,12 +36,14 @@ const authLinks = [
 
 const guestTabs = [
   { href: "/", label: "홈", icon: LayoutDashboard },
+  { href: "/dividends", label: "배당", icon: CalendarDays },
   { href: "/disclosures", label: "공시", icon: FileText },
   { href: "/login", label: "로그인", icon: LogIn },
 ];
 
 const authTabs = [
   { href: "/", label: "대시보드", icon: LayoutDashboard },
+  { href: "/dividends", label: "배당", icon: CalendarDays },
   { href: "/disclosures", label: "공시", icon: FileText },
   { href: "/watchlist", label: "관심", icon: Star },
   { href: "/settings", label: "설정", icon: Settings },
@@ -90,13 +95,16 @@ export function Nav() {
   const visibleBadgeCount = isActive("/disclosures") ? 0 : badgeCount;
 
   useEffect(() => {
-    fetchCount();
+    const initialTimer = setTimeout(() => {
+      fetchCount();
+    }, 0);
     const interval = setInterval(fetchCount, 300_000);
     const onVisibility = () => {
       if (document.visibilityState === "visible") fetchCount();
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
+      clearTimeout(initialTimer);
       clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };

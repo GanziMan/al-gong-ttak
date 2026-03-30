@@ -49,6 +49,12 @@ export function DividendSummaryCard({ event, corpName, stockCode }: DividendSumm
   const change = CHANGE_META[event.change_vs_prev_year] ?? CHANGE_META.unknown;
   const title = corpName || event.corp_name || "이 종목";
   const code = stockCode || event.stock_code;
+  const metaBadges = [
+    typeof event.yield_pct === "number" ? `배당수익률 ${event.yield_pct}%` : null,
+    event.source_year ? `기준 연도 ${event.source_year}` : null,
+    event.payout_cycle_label || null,
+    typeof event.payout_frequency_per_year === "number" ? `최근 연 ${event.payout_frequency_per_year}회` : null,
+  ].filter(Boolean) as string[];
 
   return (
     <div className="glass-card rounded-2xl p-4">
@@ -91,45 +97,31 @@ export function DividendSummaryCard({ event, corpName, stockCode }: DividendSumm
           </p>
         </div>
         <div className="rounded-xl border border-border/30 bg-background/60 px-3 py-3">
-          <p className="text-[11px] text-muted-foreground/60">최근 결산기준일</p>
-          <p className="text-[15px] font-semibold text-foreground mt-1">{formatDate(event.reference_date)}</p>
-        </div>
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground/80">
-        {typeof event.yield_pct === "number" && <span>배당수익률 {event.yield_pct}%</span>}
-        {typeof event.payout_pct === "number" && <span>배당성향 {event.payout_pct}%</span>}
-        <span>기준 연도 {event.source_year}</span>
-        <span>{event.payout_cycle_label}</span>
-        {typeof event.payout_frequency_per_year === "number" && (
-          <span>최근 연 {event.payout_frequency_per_year}회</span>
-        )}
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-border/30 bg-background/60 px-3 py-3">
-          <p className="text-[11px] text-muted-foreground/60">최근 확정 기준일</p>
-          <p className="text-[15px] font-semibold text-foreground mt-1">
-            {event.last_confirmed_record_date ? formatDate(event.last_confirmed_record_date) : "확인된 데이터 없음"}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border/30 bg-background/60 px-3 py-3">
-          <p className="text-[11px] text-muted-foreground/60">작년 기준일</p>
-          <p className="text-[15px] font-semibold text-foreground mt-1">
-            {event.previous_year_record_date ? formatDate(event.previous_year_record_date) : "확인된 데이터 없음"}
-          </p>
+          <p className="text-[11px] text-muted-foreground/60">배당 흐름</p>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {metaBadges.map((badge) => (
+              <span
+                key={badge}
+                className="rounded-full bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground"
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
       {event.record_date_history.length > 0 && (
         <div className="mt-4 rounded-xl border border-border/30 bg-background/60 px-3 py-3">
           <p className="text-[11px] text-muted-foreground/60 mb-2">최근 배당 기준일 이력</p>
-          <div className="space-y-1.5">
+          <div className="flex flex-wrap gap-2">
             {event.record_date_history.slice(0, 3).map((item) => (
-              <div key={`${item.year}-${item.record_date}`} className="flex items-center justify-between gap-3 text-[12px]">
-                <span className="text-foreground/80">{item.year}</span>
-                <span className="font-medium text-foreground">{formatDate(item.record_date)}</span>
-              </div>
+              <span
+                key={`${item.year}-${item.record_date}`}
+                className="rounded-full bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground"
+              >
+                {item.year} {formatDate(item.record_date)}
+              </span>
             ))}
           </div>
         </div>

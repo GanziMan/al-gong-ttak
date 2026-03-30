@@ -22,5 +22,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "hourly",
       priority: 0.9,
     },
+    {
+      url: `${BASE_URL}/dividends`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
   ];
 }

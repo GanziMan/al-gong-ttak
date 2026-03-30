@@ -47,6 +47,18 @@ DIVIDEND_RECORD_DATE_LABELS = (
 )
 
 RECENT_DIVIDEND_HISTORY_YEARS = 3
+DIRECT_DIVIDEND_REPORT_KEYWORDS = (
+    "현금ㆍ현물배당결정",
+    "현금·현물배당결정",
+    "현금현물배당결정",
+)
+DIVIDEND_CONTEXT_KEYWORDS = (
+    "배당",
+    "현금배당",
+    "현금ㆍ현물배당",
+    "현금·현물배당",
+    "주당배당금",
+)
 
 
 def _is_cache_fresh(fetched_at: str) -> bool:
@@ -231,6 +243,11 @@ def _extract_record_date_from_text(text: str) -> str | None:
     return None
 
 
+def _has_dividend_context(text: str) -> bool:
+    compact = re.sub(r"\s+", "", text)
+    return any(keyword in compact for keyword in DIVIDEND_CONTEXT_KEYWORDS)
+
+
 async def _find_dividend_record_date(
     dart_client: DartClient,
     corp_code: str,
@@ -245,7 +262,7 @@ async def _find_dividend_record_date_history(
     dart_client: DartClient,
     corp_code: str,
 ) -> list[dict]:
-    async def _load() -> str | None:
+    async def _load() -> list[dict]:
         end = datetime.now().strftime("%Y%m%d")
         start = (datetime.now() - timedelta(days=900)).strftime("%Y%m%d")
         data = await dart_client.get_disclosure_list(
@@ -262,20 +279,26 @@ async def _find_dividend_record_date_history(
             key=lambda item: item.get("rcept_dt", ""),
             reverse=True,
         )
-        candidates: list[dict] = []
+        candidates: list[tuple[int, dict]] = []
         for item in disclosures:
             report_name = re.sub(r"\s+", "", str(item.get("report_nm", "")))
-            if any(keyword in report_name for keyword in DIVIDEND_RECORD_DATE_KEYWORDS):
-                candidates.append(item)
+            if any(keyword in report_name for keyword in DIRECT_DIVIDEND_REPORT_KEYWORDS):
+                candidates.append((0, item))
+            elif "배당기준일" in report_name:
+                candidates.append((1, item))
+            elif any(keyword in report_name for keyword in DIVIDEND_RECORD_DATE_KEYWORDS):
+                candidates.append((2, item))
 
         results: list[dict] = []
         seen_dates: set[str] = set()
 
-        for item in candidates[:12]:
+        for priority, item in candidates[:12]:
             rcept_no = str(item.get("rcept_no", "")).strip()
             if not rcept_no:
                 continue
             text = await dart_client.get_document_text(rcept_no)
+            if priority >= 2 and not _has_dividend_context(text):
+                continue
             record_date = _extract_record_date_from_text(text)
             if record_date:
                 dedupe_key = f"{record_date}:{rcept_no}"
@@ -292,7 +315,7 @@ async def _find_dividend_record_date_history(
         results.sort(key=lambda item: item["record_date"], reverse=True)
         return results
 
-    return await get_or_set(f"dividend:record-date-history:{corp_code}", 21600, _load)
+    return await get_or_set(f"dividend:record-date-history:v2:{corp_code}", 21600, _load)
 
 
 def _estimate_payout_frequency(record_date_history: list[dict]) -> tuple[int | None, str]:
@@ -419,8 +442,11 @@ async def build_dividend_calendar_event_with_record_date(
         event["next_event_date"] = record_date
         event["note"] = "배당 관련 공시 본문에서 확인한 배당기준일입니다."
         event["last_confirmed_record_date"] = record_date
-        current_year = str(datetime.now().year - 1)
-        previous_year = next((item["record_date"] for item in record_date_history if item["year"] == current_year), "")
+        latest_year = int(record_date[:4])
+        previous_year = next(
+            (item["record_date"] for item in record_date_history if item["year"] == str(latest_year - 1)),
+            "",
+        )
         event["previous_year_record_date"] = previous_year
         event["record_date_history"] = record_date_history[:6]
         frequency, cycle_label = _estimate_payout_frequency(record_date_history)

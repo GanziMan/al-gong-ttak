@@ -6,6 +6,10 @@ import { DividendCalendarEvent } from "@/lib/api";
 
 interface DividendCalendarProps {
   events: DividendCalendarEvent[];
+  title?: string;
+  description?: string;
+  emptyMessage?: string;
+  countLabel?: string;
 }
 
 const CHANGE_META: Record<DividendCalendarEvent["change_vs_prev_year"], { label: string; className: string }> = {
@@ -24,31 +28,47 @@ function formatDate(date: string) {
   return `${year}.${month}.${day}`;
 }
 
-export function DividendCalendar({ events }: DividendCalendarProps) {
+function buildMetaBadges(event: DividendCalendarEvent) {
+  return [
+    typeof event.yield_pct === "number" ? `배당수익률 ${event.yield_pct}%` : null,
+    event.source_year ? `기준 연도 ${event.source_year}` : null,
+    event.payout_cycle_label || null,
+    typeof event.payout_frequency_per_year === "number" ? `최근 연 ${event.payout_frequency_per_year}회` : null,
+  ].filter(Boolean) as string[];
+}
+
+export function DividendCalendar({
+  events,
+  title = "다가오는 배당 일정",
+  description = "배당 흐름은 보여주되, 실제 배당 기준일은 공시 확인이 필요합니다",
+  emptyMessage = "배당 캘린더를 만들 수 있는 데이터가 아직 없습니다",
+  countLabel,
+}: DividendCalendarProps) {
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
       <div className="border-b border-border/30 px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-4 w-4 text-primary/60" />
           <div>
-            <h2 className="text-[13px] font-semibold text-foreground/80">다가오는 배당 일정</h2>
+            <h2 className="text-[13px] font-semibold text-foreground/80">{title}</h2>
             <p className="text-[11px] text-muted-foreground/60 mt-0.5">
-              배당 흐름은 보여주되, 실제 배당 기준일은 공시 확인이 필요합니다
+              {description}
             </p>
           </div>
         </div>
-        <span className="text-[11px] text-muted-foreground/60">{events.length}개 종목</span>
+        <span className="text-[11px] text-muted-foreground/60">{countLabel ?? `${events.length}개 종목`}</span>
       </div>
 
       <div className="p-4">
         {events.length === 0 ? (
           <p className="text-[12px] text-muted-foreground/50 text-center py-8">
-            배당 캘린더를 만들 수 있는 데이터가 아직 없습니다
+            {emptyMessage}
           </p>
         ) : (
           <div className="space-y-3">
             {events.map((event) => {
               const change = CHANGE_META[event.change_vs_prev_year] ?? CHANGE_META.unknown;
+              const metaBadges = buildMetaBadges(event);
               const statusLabel =
                 event.status === "confirmed"
                   ? "확정"
@@ -78,10 +98,16 @@ export function DividendCalendar({ events }: DividendCalendarProps) {
                           {change.label}
                         </span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground/70 mt-1">
-                        기준 연도 {event.source_year}
-                        {event.reference_date ? ` · 최근 결산기준일 ${formatDate(event.reference_date)}` : ""}
-                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {metaBadges.map((badge) => (
+                          <span
+                            key={badge}
+                            className="rounded-full bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground"
+                          >
+                            {badge}
+                          </span>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="text-right shrink-0">
@@ -97,12 +123,6 @@ export function DividendCalendar({ events }: DividendCalendarProps) {
                       <Coins className="h-3.5 w-3.5" />
                       최근 DPS {event.recent_dps_raw || event.recent_dps || "-"}원
                     </span>
-                    {typeof event.yield_pct === "number" && (
-                      <span>배당수익률 {event.yield_pct}%</span>
-                    )}
-                    {typeof event.payout_pct === "number" && (
-                      <span>배당성향 {event.payout_pct}%</span>
-                    )}
                   </div>
                 </Link>
               );

@@ -269,7 +269,7 @@ export function Landing({
           <div>
             <h2 className="text-lg font-bold">배당 기준일 미리 보기</h2>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              인기 종목 기준 최근 배당 기준일과 배당 흐름입니다
+              비로그인 사용자를 위한 공개 미리보기입니다. 인기 종목 기준 최근 배당 기준일과 배당 흐름을 보여줍니다
             </p>
           </div>
           <Link
