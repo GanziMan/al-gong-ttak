@@ -1,6 +1,7 @@
 import { getToken, signOut } from "./auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const DIVIDEND_CACHE_VERSION = "v2";
 
 // --- SWR-style localStorage cache ---
 const CACHE_PREFIX = "api_cache:";
@@ -161,7 +162,7 @@ export const api = {
   // 관심종목
   getWatchlist: () => request<{ watchlist: WatchlistItem[] }>("/api/watchlist"),
   getWatchlistOverview: () =>
-    request<{ watchlist: WatchlistItem[]; dividend_events: DividendCalendarEvent[] }>("/api/watchlist/overview"),
+    request<{ watchlist: WatchlistItem[]; dividend_events: DividendCalendarEvent[] }>(`/api/watchlist/overview?dividend_cache=${DIVIDEND_CACHE_VERSION}`),
   addToWatchlist: (item: { corp_code: string; corp_name: string; stock_code: string }) =>
     request<{ watchlist: WatchlistItem[] }>("/api/watchlist", {
       method: "POST",
@@ -276,18 +277,25 @@ export const api = {
 
   // 배당 캘린더
   getDividendCalendar: (years?: number) => {
-    const qs = years ? `?years=${years}` : "";
+    const q = new URLSearchParams();
+    if (years) q.set("years", String(years));
+    q.set("v", DIVIDEND_CACHE_VERSION);
+    const qs = q.toString();
     return request<{ events: DividendCalendarEvent[] }>(`/api/dividends/calendar${qs}`);
   },
   getPublicDividendPreview: (params?: { limit?: number; years?: number }) => {
     const q = new URLSearchParams();
     if (params?.limit) q.set("limit", String(params.limit));
     if (params?.years) q.set("years", String(params.years));
+    q.set("v", DIVIDEND_CACHE_VERSION);
     const qs = q.toString();
     return request<{ events: DividendCalendarEvent[] }>(`/api/dividends/public/preview${qs ? `?${qs}` : ""}`);
   },
   getCompanyDividendCalendar: (corpCode: string, years?: number) => {
-    const qs = years ? `?years=${years}` : "";
+    const q = new URLSearchParams();
+    if (years) q.set("years", String(years));
+    q.set("v", DIVIDEND_CACHE_VERSION);
+    const qs = q.toString();
     return request<{ event: DividendCalendarEvent | null }>(`/api/dividends/calendar/${corpCode}${qs}`);
   },
 
@@ -409,7 +417,7 @@ export interface DividendCalendarEvent {
   corp_code: string;
   corp_name: string;
   stock_code: string;
-  status: "expected" | "unknown";
+  status: "confirmed" | "expected" | "unknown";
   event_type: "record_date";
   next_event_date: string;
   recent_dps: number;

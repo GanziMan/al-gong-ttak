@@ -7,7 +7,7 @@ from app.config import settings
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.services.dart_client import DartClient
-from app.services.financial_data import build_dividend_calendar_event, get_dividend_history, get_watchlist_dividend_calendar
+from app.services.financial_data import build_dividend_calendar_event_with_record_date, get_dividend_history, get_watchlist_dividend_calendar
 from app.services.popular_stocks import get_popular_stocks
 from app.services.response_cache import get_or_set
 from app.services.watchlist import load_watchlist
@@ -36,7 +36,8 @@ async def get_company_dividend_calendar(
 ):
     dart_client = DartClient(api_key=settings.dart_api_key)
     history = await get_dividend_history(dart_client, corp_code, years=years)
-    event = build_dividend_calendar_event(
+    event = await build_dividend_calendar_event_with_record_date(
+        dart_client=dart_client,
         corp_code=corp_code,
         corp_name="",
         stock_code="",
@@ -57,7 +58,8 @@ async def get_public_dividend_preview(
 
         for stock in candidates:
             history = await get_dividend_history(dart_client, stock["corp_code"], years=years)
-            event = build_dividend_calendar_event(
+            event = await build_dividend_calendar_event_with_record_date(
+                dart_client=dart_client,
                 corp_code=stock["corp_code"],
                 corp_name=stock["corp_name"],
                 stock_code=stock.get("stock_code", ""),

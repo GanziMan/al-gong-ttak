@@ -1,6 +1,7 @@
 import { cache } from "react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const DIVIDEND_CACHE_VERSION = "v2";
 
 async function fetchJson<T>(path: string, revalidate = 3600): Promise<T | null> {
   try {
@@ -37,7 +38,7 @@ export const getCompanyDividendCalendar = cache(async (corpCode: string) =>
       corp_code: string;
       corp_name: string;
       stock_code: string;
-      status: "expected" | "unknown";
+      status: "confirmed" | "expected" | "unknown";
       event_type: "record_date";
       next_event_date: string;
       recent_dps: number;
@@ -49,7 +50,7 @@ export const getCompanyDividendCalendar = cache(async (corpCode: string) =>
       reference_date: string;
       note: string;
     } | null;
-  }>(`/api/dividends/calendar/${corpCode}`, 86400)
+  }>(`/api/dividends/calendar/${corpCode}?v=${DIVIDEND_CACHE_VERSION}`, 300)
 );
 
 export const getCompanyStockPrices = cache(async (corpCode: string) =>

@@ -2,6 +2,7 @@ import { cache } from "react";
 import type { DashboardSummary, Disclosure, DisclosurePreview, DividendCalendarEvent } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const DIVIDEND_CACHE_VERSION = "v2";
 
 interface PublicDisclosuresResponse {
   disclosures: Disclosure[];
@@ -35,7 +36,7 @@ export const getPublicLandingData = cache(async (): Promise<{
   const [summary, disclosuresData, dividendData] = await Promise.all([
     fetchJson<DashboardSummary>("/api/dashboard/public", 300),
     fetchJson<PublicDisclosurePreviewResponse>("/api/disclosures/public/preview?days=3&limit=10", 300),
-    fetchJson<{ events: DividendCalendarEvent[] }>("/api/dividends/public/preview?limit=6", 300),
+    fetchJson<{ events: DividendCalendarEvent[] }>(`/api/dividends/public/preview?limit=6&v=${DIVIDEND_CACHE_VERSION}`, 300),
   ]);
 
   if (!summary && !disclosuresData) {

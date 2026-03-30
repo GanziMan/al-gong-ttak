@@ -11,7 +11,7 @@ import { api, getCached, setCache, isFresh, Corp, DividendCalendarEvent, Watchli
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WatchlistPage() {
-  const CACHE_KEY = "/api/watchlist/overview";
+  const CACHE_KEY = "/api/watchlist/overview?dividend_cache=v2";
   const cached = getCached<{ watchlist: WatchlistItem[]; dividend_events: DividendCalendarEvent[] }>(CACHE_KEY);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(cached?.watchlist ?? []);
   const [dividendEvents, setDividendEvents] = useState<DividendCalendarEvent[]>(cached?.dividend_events ?? []);

@@ -49,7 +49,12 @@ export function DividendCalendar({ events }: DividendCalendarProps) {
           <div className="space-y-3">
             {events.map((event) => {
               const change = CHANGE_META[event.change_vs_prev_year] ?? CHANGE_META.unknown;
-              const statusLabel = event.status === "expected" ? "예상" : "확인 필요";
+              const statusLabel =
+                event.status === "confirmed"
+                  ? "확정"
+                  : event.status === "expected"
+                    ? "예상"
+                    : "확인 필요";
 
               return (
                 <Link

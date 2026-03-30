@@ -40,7 +40,12 @@ export function DividendSummaryCard({ event, corpName, stockCode }: DividendSumm
     );
   }
 
-  const statusLabel = event.status === "expected" ? "예상" : "미정";
+  const statusLabel =
+    event.status === "confirmed"
+      ? "확정"
+      : event.status === "expected"
+        ? "예상"
+        : "미정";
   const change = CHANGE_META[event.change_vs_prev_year] ?? CHANGE_META.unknown;
   const title = corpName || event.corp_name || "이 종목";
   const code = stockCode || event.stock_code;

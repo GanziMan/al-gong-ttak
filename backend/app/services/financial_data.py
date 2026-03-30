@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -11,12 +12,14 @@ from sqlalchemy import select
 from app.database import async_session
 from app.models.financial_data import FinancialData
 from app.services.dart_client import DartClient
+from app.services.response_cache import get_or_set
 
 logger = logging.getLogger(__name__)
 
 CACHE_TTL_HOURS = 24
 
 DIVIDEND_CHANGE_ORDER = {
+    "confirmed": -1,
     "increase": 0,
     "flat": 1,
     "decrease": 2,
@@ -24,6 +27,24 @@ DIVIDEND_CHANGE_ORDER = {
     "new": 4,
     "unknown": 5,
 }
+
+DIVIDEND_RECORD_DATE_KEYWORDS = (
+    "현금ㆍ현물배당결정",
+    "현금·현물배당결정",
+    "현금현물배당결정",
+    "주주명부폐쇄기간또는기준일설정",
+    "주주명부폐쇄기준일",
+    "배당기준일",
+)
+
+DIVIDEND_RECORD_DATE_LABELS = (
+    "배당기준일",
+    "주주명부폐쇄기준일",
+    "주주명부 폐쇄기준일",
+    "주주명부폐쇄 기간 또는 기준일",
+    "주주명부폐쇄기간 또는 기준일",
+    "기준일",
+)
 
 
 def _is_cache_fresh(fetched_at: str) -> bool:
@@ -178,6 +199,76 @@ def _pick_reference_date(items: list[dict]) -> str:
     return ""
 
 
+def _normalize_korean_date(date_text: str) -> str | None:
+    normalized = re.sub(r"[./]", "-", date_text.strip())
+    match = re.search(r"(20\d{2})-(\d{1,2})-(\d{1,2})", normalized)
+    if not match:
+        return None
+    year, month, day = match.groups()
+    try:
+        return datetime(int(year), int(month), int(day)).strftime("%Y-%m-%d")
+    except ValueError:
+        return None
+
+
+def _extract_record_date_from_text(text: str) -> str | None:
+    if not text:
+        return None
+
+    compact = re.sub(r"\s+", " ", text)
+    for label in DIVIDEND_RECORD_DATE_LABELS:
+        pattern = rf"{re.escape(label)}[^0-9]{{0,20}}(20\d{{2}}[./-]\d{{1,2}}[./-]\d{{1,2}}|20\d{{2}}년\s*\d{{1,2}}월\s*\d{{1,2}}일)"
+        match = re.search(pattern, compact)
+        if not match:
+            continue
+        raw_date = match.group(1)
+        raw_date = raw_date.replace("년", "-").replace("월", "-").replace("일", "")
+        parsed = _normalize_korean_date(raw_date)
+        if parsed:
+            return parsed
+    return None
+
+
+async def _find_dividend_record_date(
+    dart_client: DartClient,
+    corp_code: str,
+) -> str | None:
+    async def _load() -> str | None:
+        end = datetime.now().strftime("%Y%m%d")
+        start = (datetime.now() - timedelta(days=400)).strftime("%Y%m%d")
+        data = await dart_client.get_disclosure_list(
+            corp_code=corp_code,
+            bgn_de=start,
+            end_de=end,
+            page_count=100,
+        )
+        if data.get("status") != "000":
+            return None
+
+        disclosures = sorted(
+            data.get("list", []),
+            key=lambda item: item.get("rcept_dt", ""),
+            reverse=True,
+        )
+        candidates = []
+        for item in disclosures:
+            report_name = re.sub(r"\s+", "", str(item.get("report_nm", "")))
+            if any(keyword in report_name for keyword in DIVIDEND_RECORD_DATE_KEYWORDS):
+                candidates.append(item)
+
+        for item in candidates[:8]:
+            rcept_no = str(item.get("rcept_no", "")).strip()
+            if not rcept_no:
+                continue
+            text = await dart_client.get_document_text(rcept_no)
+            record_date = _extract_record_date_from_text(text)
+            if record_date:
+                return record_date
+        return None
+
+    return await get_or_set(f"dividend:record-date:{corp_code}", 21600, _load)
+
+
 def _build_dividend_year_summary(year_data: dict) -> dict | None:
     items = year_data.get("dividends", [])
     if not items:
@@ -252,6 +343,31 @@ def build_dividend_calendar_event(
     }
 
 
+async def build_dividend_calendar_event_with_record_date(
+    dart_client: DartClient,
+    corp_code: str,
+    corp_name: str,
+    stock_code: str,
+    dividend_history: list[dict],
+) -> dict | None:
+    event = build_dividend_calendar_event(
+        corp_code=corp_code,
+        corp_name=corp_name,
+        stock_code=stock_code,
+        dividend_history=dividend_history,
+    )
+    if not event:
+        return None
+
+    record_date = await _find_dividend_record_date(dart_client, corp_code)
+    if record_date:
+        event["status"] = "confirmed"
+        event["next_event_date"] = record_date
+        event["note"] = "배당 관련 공시 본문에서 확인한 배당기준일입니다."
+
+    return event
+
+
 async def get_watchlist_dividend_calendar(
     dart_client: DartClient,
     watchlist: list[dict],
@@ -259,7 +375,8 @@ async def get_watchlist_dividend_calendar(
 ) -> list[dict]:
     async def _build(item: dict) -> dict | None:
         history = await get_dividend_history(dart_client, item["corp_code"], years=years)
-        return build_dividend_calendar_event(
+        return await build_dividend_calendar_event_with_record_date(
+            dart_client=dart_client,
             corp_code=item["corp_code"],
             corp_name=item["corp_name"],
             stock_code=item.get("stock_code", ""),
