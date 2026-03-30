@@ -220,7 +220,7 @@ export function Nav() {
                   if (tab.href === "/disclosures") markDisclosuresAsSeen();
                 }}
                 className={cn(
-                  "relative flex-1 select-none flex-col items-center justify-center gap-0.5 py-2 min-h-[3.5rem] transition-colors touch-manipulation active:scale-95",
+                  "relative flex flex-1 select-none flex-col items-center justify-center gap-0.5 py-2 min-h-[3.5rem] text-center transition-colors touch-manipulation active:scale-95",
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
