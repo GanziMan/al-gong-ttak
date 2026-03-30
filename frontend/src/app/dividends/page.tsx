@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DividendsPage() {
-  const data = await getPublicDividendData(18);
+  const data = await getPublicDividendData(6);
 
   return <DividendsClient initialPublicEvents={data?.events ?? []} />;
 }

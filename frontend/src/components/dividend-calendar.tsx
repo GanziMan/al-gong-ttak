@@ -102,7 +102,7 @@ export function DividendCalendar({
                         {metaBadges.map((badge) => (
                           <span
                             key={badge}
-                            className="rounded-full bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground"
+                            className="rounded-full border border-border/60 bg-accent/80 px-2 py-1 text-[10px] font-medium text-foreground/85"
                           >
                             {badge}
                           </span>

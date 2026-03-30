@@ -53,8 +53,8 @@ export function Nav() {
   const pathname = usePathname();
   const { user, isLoggedIn, logout } = useAuth();
   const [isDark, setIsDark] = useState(() =>
-    typeof document !== "undefined"
-      ? document.documentElement.classList.contains("dark")
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("theme") === "dark"
       : false
   );
   const [badgeCount, setBadgeCount] = useState(0);

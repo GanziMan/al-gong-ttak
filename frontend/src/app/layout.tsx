@@ -170,9 +170,11 @@ export default function RootLayout({
         <Script id="ga-init" strategy="afterInteractive">
           {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-ZY0B7D53G0');`}
         </Script>
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive">{`(function(){try{var d=document.documentElement;var t=localStorage.getItem('theme');if(t==='dark'){d.classList.add('dark')}}catch(e){}})()`}</Script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var d=document.documentElement;var t=localStorage.getItem('theme')||'light';var dark=t==='dark';d.classList.toggle('dark',dark);d.style.colorScheme=dark?'dark':'light';}catch(e){}})();`,
+          }}
+        />
         <SwRegister />
         <AuthProvider>
           <Nav />
@@ -189,7 +191,10 @@ export default function RootLayout({
           <main className="flex-1 px-4 py-6 pb-20 sm:px-6 sm:pb-6 lg:px-8">
             <div className="mx-auto max-w-7xl">{children}</div>
           </main>
-          <div className="px-4 pb-3 sm:px-6 lg:px-8">
+          <div
+            className="px-4 pb-3 sm:px-6 lg:px-8"
+            style={{ paddingBottom: "calc(var(--bottom-nav-height) + var(--safe-area-bottom) + 0.75rem)" }}
+          >
             <div className="mx-auto max-w-7xl space-y-2">
               <p className="text-[11px] leading-relaxed text-muted-foreground/70">
                 본 서비스의 정보와 AI 분석은 투자 참고용으로만 제공됩니다. 모든 투자 판단과 그에 따른 책임은 이용자 본인에게 있습니다.
