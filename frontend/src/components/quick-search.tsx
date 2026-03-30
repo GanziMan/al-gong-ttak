@@ -115,7 +115,7 @@ export function QuickSearch() {
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 hover:bg-accent rounded transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 select-none p-0.5 hover:bg-accent rounded transition-colors"
           >
             <X className="h-3 w-3 text-muted-foreground/50" />
           </button>
@@ -136,7 +136,7 @@ export function QuickSearch() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <button
-                    className="min-w-0 flex-1 text-left hover:bg-accent/40 rounded-lg px-1 py-1 transition-colors"
+                    className="min-w-0 select-none flex-1 text-left hover:bg-accent/40 rounded-lg px-1 py-1 transition-colors"
                     onClick={() => handleCompanySelect(corp)}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -155,7 +155,7 @@ export function QuickSearch() {
                   </button>
                   <button
                     onClick={() => handleDisclosureSelect(corp)}
-                    className="shrink-0 rounded-lg border border-border/60 px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    className="shrink-0 select-none rounded-lg border border-border/60 px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
                     공시
                   </button>

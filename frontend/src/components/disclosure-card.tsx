@@ -54,7 +54,7 @@ function DisclosureCardInner({
     <article
       ref={cardRef}
       className={cn(
-        "glass-card rounded-2xl border-l-[3px] transition-all hover:shadow-md focus-within:ring-2 focus-within:ring-primary/50",
+        "glass-card rounded-2xl border-l-[3px] transition-all hover:shadow-md",
         categoryBorder[cat] || "border-l-zinc-300",
       )}
       role="article"
@@ -99,7 +99,7 @@ function DisclosureCardInner({
                   e.stopPropagation();
                   onToggleBookmark(disclosure);
                 }}
-                className="flex items-center justify-center rounded-lg hover:bg-accent active:scale-95 transition-all touch-manipulation"
+                className="flex select-none items-center justify-center rounded-lg hover:bg-accent active:scale-95 transition-all touch-manipulation"
                 aria-label={isBookmarked ? "북마크 해제" : "북마크"}>
                 {isBookmarked ? (
                   <BookmarkCheck className="h-5 w-5 text-primary" />
@@ -175,7 +175,7 @@ function DisclosureCardInner({
             )}
 
             <button
-              className="mt-2.5 min-h-[44px] w-full flex items-center justify-center gap-1 text-[11px] font-semibold text-primary/70 hover:text-primary hover:bg-primary/5 active:scale-98 rounded-lg transition-all touch-manipulation focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="mt-2.5 min-h-[44px] w-full select-none flex items-center justify-center gap-1 rounded-lg text-[11px] font-semibold text-primary/70 transition-all touch-manipulation hover:bg-primary/5 hover:text-primary active:scale-98 focus:outline-none focus:ring-0"
               onClick={() => {
                 const next = !expanded;
                 setExpanded(next);

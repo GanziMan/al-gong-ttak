@@ -10,6 +10,10 @@ interface DividendCalendarProps {
   description?: string;
   emptyMessage?: string;
   countLabel?: string;
+  maxItems?: number;
+  compact?: boolean;
+  footerLinkHref?: string;
+  footerLinkLabel?: string;
 }
 
 const CHANGE_META: Record<DividendCalendarEvent["change_vs_prev_year"], { label: string; className: string }> = {
@@ -43,7 +47,13 @@ export function DividendCalendar({
   description = "배당 흐름은 보여주되, 실제 배당 기준일은 공시 확인이 필요합니다",
   emptyMessage = "배당 캘린더를 만들 수 있는 데이터가 아직 없습니다",
   countLabel,
+  maxItems,
+  compact = false,
+  footerLinkHref,
+  footerLinkLabel,
 }: DividendCalendarProps) {
+  const visibleEvents = typeof maxItems === "number" ? events.slice(0, maxItems) : events;
+
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
       <div className="border-b border-border/30 px-4 py-3 flex items-center justify-between gap-3">
@@ -60,13 +70,13 @@ export function DividendCalendar({
       </div>
 
       <div className="p-4">
-        {events.length === 0 ? (
+        {visibleEvents.length === 0 ? (
           <p className="text-[12px] text-muted-foreground/50 text-center py-8">
             {emptyMessage}
           </p>
         ) : (
           <div className="space-y-3">
-            {events.map((event) => {
+            {visibleEvents.map((event) => {
               const change = CHANGE_META[event.change_vs_prev_year] ?? CHANGE_META.unknown;
               const metaBadges = buildMetaBadges(event);
               const statusLabel =
@@ -99,10 +109,12 @@ export function DividendCalendar({
                         </span>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {metaBadges.map((badge) => (
+                        {metaBadges.map((badge, index) => (
                           <span
                             key={badge}
-                            className="rounded-full border border-border/60 bg-accent/80 px-2 py-1 text-[10px] font-medium text-foreground/85"
+                            className={`rounded-full border border-border/60 bg-accent/80 px-2 py-1 text-[10px] font-medium text-foreground/85 ${
+                              compact && index > 1 ? "hidden sm:inline-flex" : ""
+                            }`}
                           >
                             {badge}
                           </span>
@@ -118,7 +130,7 @@ export function DividendCalendar({
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground/80">
+                  <div className={`mt-3 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground/80 ${compact ? "sm:mt-2" : ""}`}>
                     <span className="inline-flex items-center gap-1">
                       <Coins className="h-3.5 w-3.5" />
                       최근 DPS {event.recent_dps_raw || event.recent_dps || "-"}원
@@ -127,6 +139,14 @@ export function DividendCalendar({
                 </Link>
               );
             })}
+          </div>
+        )}
+
+        {footerLinkHref && footerLinkLabel && visibleEvents.length > 0 && (
+          <div className="mt-4 border-t border-border/30 pt-3">
+            <Link href={footerLinkHref} className="text-[12px] font-medium text-primary hover:underline">
+              {footerLinkLabel}
+            </Link>
           </div>
         )}
       </div>

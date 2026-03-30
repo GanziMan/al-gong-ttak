@@ -126,7 +126,16 @@ export default function WatchlistPage() {
       {loading ? (
         <Skeleton className="h-72 rounded-2xl" />
       ) : (
-        <DividendCalendar events={dividendEvents} />
+        <DividendCalendar
+          events={dividendEvents}
+          title="관심종목 배당 일정"
+          description="관심종목 안에서 먼저 봐야 할 배당 일정만 간단히 보여줍니다."
+          countLabel={`전체 ${dividendEvents.length}개 종목`}
+          maxItems={5}
+          compact
+          footerLinkHref="/dividends"
+          footerLinkLabel="배당 탭에서 전체보기 →"
+        />
       )}
 
       {loading ? (

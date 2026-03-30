@@ -1,8 +1,10 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "공시딱 — 공시, 알아서 공시 딱";
+export const alt = "공시딱 | AI 공시 요약과 배당 기준일";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+
+const featurePills = ["AI 공시 요약", "배당 기준일", "관심종목", "재무 흐름"];
 
 export default function OgImage() {
   return new ImageResponse(
@@ -12,131 +14,222 @@ export default function OgImage() {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #0f0a1e 0%, #1a1035 40%, #0d1a2d 100%)",
           position: "relative",
           overflow: "hidden",
+          background:
+            "linear-gradient(135deg, #1f140d 0%, #2c1a0f 42%, #4a2d1a 100%)",
+          color: "#fff7ef",
         }}
       >
-        {/* Background glow effects */}
         <div
           style={{
             position: "absolute",
-            top: "-100px",
-            left: "200px",
-            width: "400px",
-            height: "400px",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%)",
+            inset: "0",
             display: "flex",
+            background:
+              "radial-gradient(circle at 18% 18%, rgba(244, 191, 117, 0.22) 0%, transparent 34%), radial-gradient(circle at 86% 20%, rgba(251, 191, 36, 0.12) 0%, transparent 28%), radial-gradient(circle at 76% 84%, rgba(217, 119, 6, 0.16) 0%, transparent 32%)",
           }}
         />
         <div
           style={{
             position: "absolute",
-            bottom: "-50px",
-            right: "150px",
-            width: "350px",
-            height: "350px",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)",
+            top: "48px",
+            right: "56px",
             display: "flex",
+            width: "220px",
+            height: "220px",
+            borderRadius: "40px",
+            border: "1px solid rgba(255,255,255,0.1)",
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
+            boxShadow: "0 24px 80px rgba(0,0,0,0.22)",
+            transform: "rotate(12deg)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "-28px",
+            right: "188px",
+            display: "flex",
+            width: "160px",
+            height: "160px",
+            borderRadius: "999px",
+            background: "rgba(245, 158, 11, 0.16)",
+            filter: "blur(8px)",
           }}
         />
 
-        {/* Logo badge */}
         <div
           style={{
+            position: "relative",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "80px",
-            height: "80px",
-            borderRadius: "20px",
-            background: "linear-gradient(135deg, #7c3aed, #6366f1)",
-            marginBottom: "32px",
-            boxShadow: "0 8px 32px rgba(124,58,237,0.4)",
-          }}
-        >
-          <span style={{ fontSize: "36px", fontWeight: 900, color: "#fff" }}>A</span>
-        </div>
-
-        {/* Title */}
-        <div
-          style={{
-            display: "flex",
+            flex: 1,
             flexDirection: "column",
-            alignItems: "center",
-            gap: "12px",
+            justifyContent: "space-between",
+            padding: "56px 60px 52px",
           }}
         >
-          <span
+          <div
             style={{
-              fontSize: "56px",
-              fontWeight: 900,
-              color: "#ffffff",
-              letterSpacing: "-1px",
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
             }}
           >
-            공시딱
-          </span>
-          <span
-            style={{
-              fontSize: "26px",
-              fontWeight: 500,
-              background: "linear-gradient(90deg, #c4b5fd, #93c5fd)",
-              backgroundClip: "text",
-              color: "transparent",
-            }}
-          >
-            공시, 알아서 공시 딱
-          </span>
-        </div>
-
-        {/* Feature pills */}
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            marginTop: "40px",
-          }}
-        >
-          {["AI 공시 분석", "호재/악재 판별", "관심종목 추적", "오늘의 브리핑"].map(
-            (label) => (
-              <div
-                key={label}
+            <div
+              style={{
+                width: "72px",
+                height: "72px",
+                borderRadius: "22px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)",
+                boxShadow: "0 14px 32px rgba(234, 88, 12, 0.28)",
+                color: "#fffaf3",
+                fontSize: "34px",
+                fontWeight: 900,
+              }}
+            >
+              딱
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+              }}
+            >
+              <span
                 style={{
                   display: "flex",
-                  alignItems: "center",
-                  padding: "10px 20px",
-                  borderRadius: "100px",
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  color: "rgba(255,255,255,0.8)",
+                  fontSize: "20px",
+                  fontWeight: 700,
+                  color: "rgba(255,247,239,0.96)",
                 }}
               >
-                {label}
-              </div>
-            ),
-          )}
-        </div>
+                공시딱
+              </span>
+              <span
+                style={{
+                  display: "flex",
+                  fontSize: "16px",
+                  color: "rgba(255,240,224,0.72)",
+                }}
+              >
+                DART 기반 한국 주식 공시·배당 서비스
+              </span>
+            </div>
+          </div>
 
-        {/* Bottom accent line */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "0",
-            left: "0",
-            right: "0",
-            height: "4px",
-            background: "linear-gradient(90deg, #7c3aed, #6366f1, #3b82f6, #7c3aed)",
-            display: "flex",
-          }}
-        />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "20px",
+              maxWidth: "760px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                width: "fit-content",
+                borderRadius: "999px",
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.08)",
+                padding: "10px 18px",
+                fontSize: "16px",
+                fontWeight: 700,
+                color: "#fde6cd",
+              }}
+            >
+              AI 공시 요약과 배당 기준일
+            </div>
+            <div
+              style={{
+                display: "flex",
+                fontSize: "62px",
+                fontWeight: 900,
+                lineHeight: 1.06,
+                letterSpacing: "-0.04em",
+                color: "#fffaf5",
+              }}
+            >
+              중요한 공시만 빠르게 보고
+              <br />
+              배당 일정까지 한눈에 확인
+            </div>
+            <div
+              style={{
+                display: "flex",
+                maxWidth: "760px",
+                fontSize: "24px",
+                lineHeight: 1.45,
+                color: "rgba(255,241,229,0.78)",
+              }}
+            >
+              종목별 공시 흐름, 최근 배당 기준일 이력, 관심종목 대시보드를
+              하나의 화면에서 정리합니다.
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "20px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                flexWrap: "wrap",
+                maxWidth: "840px",
+              }}
+            >
+              {featurePills.map((label) => (
+                <div
+                  key={label}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "999px",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.08)",
+                    padding: "10px 18px",
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    color: "rgba(255,247,239,0.92)",
+                  }}
+                >
+                  {label}
+                </div>
+              ))}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minWidth: "178px",
+                height: "58px",
+                borderRadius: "999px",
+                background: "linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)",
+                color: "#fffaf3",
+                fontSize: "20px",
+                fontWeight: 800,
+                boxShadow: "0 18px 36px rgba(234, 88, 12, 0.22)",
+              }}
+            >
+              gongsittak.com
+            </div>
+          </div>
+        </div>
       </div>
     ),
     { ...size },

@@ -123,7 +123,7 @@ export function Nav() {
       <header className="glass-nav border-b sticky top-0 z-50">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-10">
-            <Link href="/" className="flex items-center gap-2.5 group">
+            <Link href="/" className="flex select-none items-center gap-2.5 group">
               <span className="text-sm font-bold tracking-wide text-foreground group-hover:text-primary transition-colors">
                 공시딱
               </span>
@@ -138,7 +138,7 @@ export function Nav() {
                     if (link.href === "/disclosures") markDisclosuresAsSeen();
                   }}
                   className={cn(
-                    "relative px-3.5 py-2 text-[13px] font-medium transition-colors rounded-lg touch-manipulation",
+                    "relative select-none px-3.5 py-2 text-[13px] font-medium transition-colors rounded-lg touch-manipulation",
                     isActive(link.href)
                       ? "text-primary bg-primary/5"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent",
@@ -162,7 +162,7 @@ export function Nav() {
             {/* 검색 아이콘 - 모바일 */}
             <button
               onClick={() => setSearchModalOpen(true)}
-              className="flex sm:hidden items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors touch-manipulation"
+              className="flex select-none sm:hidden items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors touch-manipulation"
               aria-label="검색"
             >
               <Search className="h-4 w-4" />
@@ -174,7 +174,7 @@ export function Nav() {
                 </span>
                 <button
                   onClick={logout}
-                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  className="select-none text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   로그아웃
                 </button>
@@ -182,14 +182,14 @@ export function Nav() {
             ) : (
               <Link
                 href="/login"
-                className="hidden sm:inline-flex text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="hidden select-none sm:inline-flex text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 로그인
               </Link>
             )}
             <button
               onClick={toggleTheme}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="flex select-none h-9 w-9 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label="테마 전환"
             >
               {isDark ? (
@@ -220,7 +220,7 @@ export function Nav() {
                   if (tab.href === "/disclosures") markDisclosuresAsSeen();
                 }}
                 className={cn(
-                  "relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[3.5rem] transition-colors touch-manipulation active:scale-95",
+                  "relative flex-1 select-none flex-col items-center justify-center gap-0.5 py-2 min-h-[3.5rem] transition-colors touch-manipulation active:scale-95",
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >

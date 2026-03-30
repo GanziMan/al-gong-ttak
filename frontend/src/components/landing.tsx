@@ -214,7 +214,7 @@ export function Landing({
           <div className="mt-10 pb-5">
             <Link
               href="/disclosures"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20">
+              className="inline-flex select-none items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20">
               최근 중요 공시 보기
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -227,7 +227,7 @@ export function Landing({
         <Link
           prefetch={true}
           href={{ pathname: "/disclosures", query: { days: "3" } }}
-          className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
+          className="glass-card select-none rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
           <p className="text-[10px] font-medium text-muted-foreground">
             최근 3일 공시
           </p>
@@ -242,7 +242,7 @@ export function Landing({
             pathname: "/disclosures",
             query: { days: "3", category: "호재" },
           }}
-          className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
+          className="glass-card select-none rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
           <p className="text-[10px] font-medium text-muted-foreground">호재</p>
           <p className="text-2xl font-black text-emerald-500 mt-1">
             {summary ? summary.bullish : "…"}
@@ -255,7 +255,7 @@ export function Landing({
             pathname: "/disclosures",
             query: { days: "3", category: "악재" },
           }}
-          className="glass-card rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
+          className="glass-card select-none rounded-2xl p-4 text-center transition-colors hover:bg-accent/40">
           <p className="text-[10px] font-medium text-muted-foreground">악재</p>
           <p className="text-2xl font-black text-red-500 mt-1">
             {summary ? summary.bearish : "…"}
@@ -274,8 +274,9 @@ export function Landing({
           </div>
           <Link
             href="/login"
-            className="text-xs text-primary hover:underline">
-            로그인하고 내 종목 보기 →
+            className="shrink-0 select-none whitespace-nowrap text-xs text-primary hover:underline">
+            <span className="sm:hidden">내 종목 보기 →</span>
+            <span className="hidden sm:inline">로그인하고 내 종목 보기 →</span>
           </Link>
         </div>
 
@@ -285,7 +286,7 @@ export function Landing({
               <Link
                 key={event.corp_code}
                 href={`/company/${event.corp_code}`}
-                className="glass-card rounded-2xl p-4 transition-colors hover:bg-accent/40"
+                className="glass-card select-none rounded-2xl p-4 transition-colors hover:bg-accent/40"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -373,7 +374,7 @@ export function Landing({
           {features.map((f, i) => (
             <div
               key={f.title}
-              className={`glass-card rounded-2xl p-5 transition-all hover:scale-[1.02] hover:shadow-lg group ${i === 0 ? "col-span-2 lg:col-span-1" : ""}`}>
+              className={`glass-card select-none rounded-2xl p-5 transition-all hover:scale-[1.02] hover:shadow-lg group ${i === 0 ? "col-span-2 lg:col-span-1" : ""}`}>
               <div
                 className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${f.bg} mb-4 transition-transform group-hover:scale-110`}>
                 <f.icon className={`h-5 w-5 ${f.color}`} />
@@ -402,7 +403,7 @@ export function Landing({
             </p>
             <Link
               href={`/login`}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border px-6 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted mt-6">
+              className="inline-flex select-none items-center justify-center gap-2 rounded-2xl border border-border px-6 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted mt-6">
               대시보드 시작하기
             </Link>
           </div>

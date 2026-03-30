@@ -106,7 +106,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={onClose}
-            className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-accent active:scale-95 transition-all touch-manipulation"
+            className="flex select-none items-center justify-center h-10 w-10 rounded-full hover:bg-accent active:scale-95 transition-all touch-manipulation"
             aria-label="닫기"
           >
             <X className="h-5 w-5" />
@@ -168,7 +168,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                   <div className="flex items-start justify-between gap-3">
                     <button
                       onClick={() => handleCompanySelect(corp)}
-                      className="min-w-0 flex-1 text-left rounded-xl px-1 py-1 transition-colors hover:bg-accent/40"
+                      className="min-w-0 select-none flex-1 text-left rounded-xl px-1 py-1 transition-colors hover:bg-accent/40"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
@@ -191,7 +191,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                     </button>
                     <button
                       onClick={() => handleDisclosureSelect(corp)}
-                      className="shrink-0 rounded-xl border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      className="shrink-0 select-none rounded-xl border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       공시
                     </button>

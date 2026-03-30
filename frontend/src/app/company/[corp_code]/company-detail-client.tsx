@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, Globe, User, FileText } from "lucide-react";
+import { Building2, Globe, User, FileText, CalendarDays, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -98,12 +98,29 @@ export function CompanyDetailClient({
                   </a>
                 )}
               </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Link href={`/disclosures?corp_code=${corpCode}`}>
+                  <Button variant="outline" size="sm" className="text-[11px]">
+                    <FileText className="h-3.5 w-3.5" />
+                    공시 보기
+                  </Button>
+                </Link>
+                <Link href="/dividends">
+                  <Button variant="outline" size="sm" className="text-[11px]">
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    배당 일정
+                  </Button>
+                </Link>
+                {isLoggedIn && (
+                  <Link href="/watchlist">
+                    <Button variant="ghost" size="sm" className="text-[11px]">
+                      <Star className="h-3.5 w-3.5" />
+                      관심종목
+                    </Button>
+                  </Link>
+                )}
+              </div>
             </div>
-            <Link href={`/disclosures?corp_code=${corpCode}`}>
-              <Button variant="outline" size="sm" className="text-[11px] shrink-0">
-                공시 보기
-              </Button>
-            </Link>
           </div>
         </div>
       ) : (
