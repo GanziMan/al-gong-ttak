@@ -42,6 +42,13 @@ function DisclosuresContent({ initialDisclosures, initialPendingAnalysis = 0 }: 
   const [pendingAnalysis, setPendingAnalysis] = useState(0);
   const [filtering, setFiltering] = useState(false);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const canUseInitialPublicData =
+    !corpCode &&
+    !isLoggedIn &&
+    category === "all" &&
+    days === 30 &&
+    minScore === 0 &&
+    initialDisclosures.length > 0;
   const requestSeqRef = useRef(0);
   const bookmarksRef = useRef<Bookmark[]>([]);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -210,7 +217,7 @@ function DisclosuresContent({ initialDisclosures, initialPendingAnalysis = 0 }: 
         // 폴링 실패는 무시
       }
     }
-  }, [days, category, minScore, corpCode, isLoggedIn, initialDisclosures, initialPendingAnalysis, toErrorMessage]);
+  }, [days, category, minScore, corpCode, isLoggedIn, initialDisclosures, initialPendingAnalysis, canUseInitialPublicData, toErrorMessage]);
 
   useEffect(() => {
     if (corpCode) setLoading(true);
@@ -514,4 +521,3 @@ export function DisclosuresClient({ initialDisclosures }: DisclosuresClientProps
     </Suspense>
   );
 }
-  const canUseInitialPublicData = !corpCode && !isLoggedIn && category === "all" && days === 30 && minScore === 0 && initialDisclosures.length > 0;

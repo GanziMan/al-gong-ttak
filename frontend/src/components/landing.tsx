@@ -18,22 +18,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 const features = [
   {
     icon: BrainCircuit,
-    title: "AI 공시 분석",
-    desc: "상장기업 공시를 AI가 자동 분류하고 호재/악재를 판별합니다",
+    title: "중요 공시 요약",
+    desc: "긴 공시 원문 대신 핵심 내용과 중요도를 빠르게 확인할 수 있습니다",
     color: "text-violet-500",
     bg: "bg-violet-500/10",
   },
   {
     icon: LineChart,
     title: "재무제표 & 주가",
-    desc: "매출, 영업이익, 배당 내역과 주가 차트를 한눈에 확인합니다",
+    desc: "매출, 영업이익, 배당 흐름과 주가 차트를 한 화면에서 비교합니다",
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
   },
   {
     icon: Star,
-    title: "관심종목 & 브리핑",
-    desc: "관심 종목의 공시만 모아보고 매일 AI 브리핑을 받아보세요",
+    title: "관심종목 대시보드",
+    desc: "내가 보는 종목만 모아서 최근 공시, 브리핑, 추이를 집중해서 볼 수 있습니다",
     color: "text-amber-500",
     bg: "bg-amber-500/10",
   },
@@ -46,8 +46,8 @@ const features = [
   },
   {
     icon: BarChart3,
-    title: "공시 추이 분석",
-    desc: "30일간 공시 건수와 중요도 트렌드를 차트로 추적합니다",
+    title: "배당 캘린더",
+    desc: "관심종목 기준 예상 배당 기준일과 최근 배당 변화를 빠르게 확인합니다",
     color: "text-rose-500",
     bg: "bg-rose-500/10",
   },
@@ -188,26 +188,26 @@ export function Landing({
 
         <div className="relative">
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1]">
-            <span className="text-foreground">공시,</span>
+            <span className="text-foreground">공시를 읽는 시간,</span>
             <br />
             <span className="bg-gradient-to-r from-primary via-violet-500 to-primary bg-clip-text text-transparent">
-              알아서 딱
+              딱 줄여드립니다
             </span>
             <br />
-            <span className="text-foreground">분석해드립니다</span>
+            <span className="text-foreground">중요한 것만 빠르게</span>
           </h1>
 
           <p className="mt-6 text-base sm:text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
-            상장기업이 발표하는 주요 소식을 AI가 자동 분석하고,
+            AI가 중요한 공시를 먼저 추려주고,
             <br className="hidden sm:block" />
-            호재/악재를 판별해 알려드립니다
+            관심종목 흐름과 배당 일정까지 한눈에 정리해드립니다
           </p>
 
           <div className="mt-10 pb-5">
             <Link
               href="/disclosures"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20">
-              공시 보러가기
+              최근 중요 공시 보기
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -289,10 +289,10 @@ export function Landing({
       <section className="space-y-10">
         <div className="text-center">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            강력한 기능
+            투자 판단에 필요한 기능만 담았습니다
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            AI가 공시를 분석하고, 알림을 보내고, 트렌드를 추적합니다
+            중요 공시 요약, 관심종목 추적, 배당 일정 확인을 한 화면에서 제공합니다
           </p>
         </div>
 
@@ -321,16 +321,16 @@ export function Landing({
           <div className="relative">
             <Shield className="h-10 w-10 text-primary/40 mx-auto mb-4" />
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              나만의 공시 대시보드를 만들어보세요
+              내 종목 중심의 공시 화면을 바로 시작해보세요
             </h2>
             <p className="mt-3 text-sm text-muted-foreground max-w-sm mx-auto">
-              무료로 관심종목 등록, AI 브리핑, 북마크 메모, 재무제표 비교까지 —
-              로그인하면 모든 기능을 이용할 수 있어요
+              관심종목 등록, AI 브리핑, 배당 캘린더, 북마크 메모까지
+              로그인하면 바로 사용할 수 있습니다
             </p>
             <Link
               href={`/login`}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border px-6 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted mt-6">
-              로그인하기
+              대시보드 시작하기
             </Link>
           </div>
         </div>
