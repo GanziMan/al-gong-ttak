@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { DividendCalendar } from "@/components/dividend-calendar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth-provider";
 import { api, DividendCalendarEvent, WatchlistItem, getCached, setCache, isFresh } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 interface DividendsClientProps {
   initialPublicEvents: DividendCalendarEvent[];
@@ -100,15 +100,19 @@ export function DividendsClient({ initialPublicEvents }: DividendsClientProps) {
       <div className="glass-card rounded-2xl p-4">
         <div className="flex flex-wrap items-center gap-2">
           {FILTER_OPTIONS.map((option) => (
-            <Button
+            <button
               key={option.value}
-              variant={filter === option.value ? "default" : "outline"}
-              size="sm"
-              className="rounded-full"
+              type="button"
               onClick={() => setFilter(option.value)}
+              className={cn(
+                "inline-flex h-8 select-none items-center justify-center rounded-full border px-3 text-[12px] font-medium transition-colors touch-manipulation",
+                filter === option.value
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
+              )}
             >
               {option.label}
-            </Button>
+            </button>
           ))}
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
