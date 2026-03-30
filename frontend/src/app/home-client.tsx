@@ -16,7 +16,7 @@ import {
   fetchWithRevalidate,
   getCached,
   DashboardSummary,
-  Disclosure,
+  DisclosurePreview,
   type DailyBriefing as DailyBriefingData,
   type HistoryDataPoint,
 } from "@/lib/api";
@@ -117,7 +117,7 @@ function Dashboard() {
 
 interface HomeClientProps {
   summary?: DashboardSummary | null;
-  disclosures?: Disclosure[];
+  disclosures?: DisclosurePreview[];
 }
 
 export function HomeClient({ summary, disclosures }: HomeClientProps = {}) {

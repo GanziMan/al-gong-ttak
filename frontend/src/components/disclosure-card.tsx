@@ -3,7 +3,7 @@
 import { memo, useState, useRef } from "react";
 import { ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Disclosure } from "@/lib/api";
+import { Disclosure, DisclosurePreview } from "@/lib/api";
 import {
   categoryColor,
   categoryBorder,
@@ -17,10 +17,12 @@ import { GlossaryHighlight } from "@/components/glossary-highlight";
 import { PriceImpactBadge } from "@/components/price-impact-badge";
 import { cn } from "@/lib/utils";
 
+type DisclosureCardItem = Disclosure | DisclosurePreview;
+
 interface DisclosureCardProps {
-  disclosure: Disclosure;
+  disclosure: DisclosureCardItem;
   isBookmarked?: boolean;
-  onToggleBookmark?: (d: Disclosure) => void;
+  onToggleBookmark?: (d: DisclosureCardItem) => void;
 }
 
 function openDisclosure(corpName: string, reportNm: string) {

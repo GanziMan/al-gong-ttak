@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { EmptyState } from "@/components/empty-state";
 import { FileText, Star } from "lucide-react";
-import { ApiError, api, fetchWithRevalidate, getCached, Bookmark, Disclosure } from "@/lib/api";
+import { ApiError, api, fetchWithRevalidate, getCached, Bookmark, Disclosure, DisclosurePreview } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,8 @@ interface DisclosuresClientProps {
   initialDisclosures: Disclosure[];
   initialPendingAnalysis?: number;
 }
+
+type BookmarkableDisclosure = Disclosure | DisclosurePreview;
 
 function DisclosuresContent({ initialDisclosures, initialPendingAnalysis = 0 }: DisclosuresClientProps) {
   const searchParams = useSearchParams();
@@ -269,7 +271,7 @@ function DisclosuresContent({ initialDisclosures, initialPendingAnalysis = 0 }: 
     return undefined;
   }, [pendingAnalysis, fetchDisclosures, isLoggedIn]);
 
-  const handleToggleBookmark = useCallback((disc: Disclosure, isBookmarkedNow: boolean) => {
+  const handleToggleBookmark = useCallback((disc: BookmarkableDisclosure, isBookmarkedNow: boolean) => {
     if (!isLoggedIn) {
       toast("로그인하면 북마크를 저장할 수 있어요", {
         action: {
