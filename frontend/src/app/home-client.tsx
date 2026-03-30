@@ -12,19 +12,32 @@ import { DailyBriefing } from "@/components/daily-briefing";
 import { Landing } from "@/components/landing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PullToRefresh } from "@/components/pull-to-refresh";
-import { api, fetchWithRevalidate, getCached, DashboardSummary, Disclosure } from "@/lib/api";
+import {
+  fetchWithRevalidate,
+  getCached,
+  DashboardSummary,
+  Disclosure,
+  type DailyBriefing as DailyBriefingData,
+  type HistoryDataPoint,
+} from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
 
+interface DashboardBootstrap {
+  summary: DashboardSummary;
+  history: HistoryDataPoint[];
+  briefing: DailyBriefingData;
+}
+
 function Dashboard() {
-  const [data, setData] = useState<DashboardSummary | null>(() => getCached<DashboardSummary>("/api/dashboard/summary"));
-  const [loading, setLoading] = useState(() => !getCached("/api/dashboard/summary"));
+  const [data, setData] = useState<DashboardBootstrap | null>(() => getCached<DashboardBootstrap>("/api/dashboard/bootstrap?history_days=14"));
+  const [loading, setLoading] = useState(() => !getCached("/api/dashboard/bootstrap?history_days=14"));
   const [error, setError] = useState("");
 
   const fetchData = async () => {
     try {
-      const cached = await fetchWithRevalidate<DashboardSummary>(
-        "/api/dashboard/summary",
+      const cached = await fetchWithRevalidate<DashboardBootstrap>(
+        "/api/dashboard/bootstrap?history_days=14",
         (fresh) => setData(fresh),
       );
       if (cached) setData(cached);
@@ -78,22 +91,22 @@ function Dashboard() {
         </div>
       )}
 
-      <DailyBriefing />
+      <DailyBriefing initialData={data?.briefing ?? null} />
 
       <SummaryCards
-        watchlistCount={data?.watchlist_count ?? 0}
-        todayDisclosures={data?.today_disclosures ?? 0}
-        bullish={data?.bullish ?? 0}
-        bearish={data?.bearish ?? 0}
+        watchlistCount={data?.summary.watchlist_count ?? 0}
+        todayDisclosures={data?.summary.today_disclosures ?? 0}
+        bullish={data?.summary.bullish ?? 0}
+        bearish={data?.summary.bearish ?? 0}
       />
 
-      <DisclosureHistoryChart />
+      <DisclosureHistoryChart initialHistory={data?.history} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <ImportantDisclosures
-          disclosures={data?.important_disclosures ?? []}
+          disclosures={data?.summary.important_disclosures ?? []}
         />
-        <RecentTimeline disclosures={data?.recent_disclosures ?? []} />
+        <RecentTimeline disclosures={data?.summary.recent_disclosures ?? []} />
       </div>
 
       <BookmarksSection />

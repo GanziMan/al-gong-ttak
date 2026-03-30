@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Plus, CheckCircle, ChevronDown, Layers } from "lucide-react";
-import { api, getCached, setCache, isFresh, type Corp, type SectorInfo } from "@/lib/api";
+import { cachedGet, getCached, type Corp, type SectorInfo } from "@/lib/api";
 
 interface SectorAddProps {
   onAdd: (corp: Corp) => void;
@@ -15,8 +15,9 @@ export function SectorAdd({ onAdd, existingCodes }: SectorAddProps) {
   const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
-    if (sectors.length > 0 && isFresh(CACHE_KEY)) return;
-    api.getSectors().then((d) => { setSectors(d.sectors); setCache(CACHE_KEY, d); }).catch(() => {});
+    cachedGet<{ sectors: SectorInfo[] }>("/api/corps/sectors", CACHE_KEY)
+      .then((d) => setSectors(d.sectors))
+      .catch(() => {});
   }, []);
 
   if (sectors.length === 0) return null;

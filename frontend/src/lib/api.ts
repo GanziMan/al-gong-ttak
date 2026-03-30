@@ -5,6 +5,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 // --- SWR-style localStorage cache ---
 const CACHE_PREFIX = "api_cache:";
 const CACHE_TTL = 5 * 60 * 1000; // 5분
+const inflightRequests = new Map<string, Promise<unknown>>();
 
 interface CacheEntry<T> {
   data: T;
@@ -57,36 +58,57 @@ export function isFresh(key: string): boolean {
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = await getToken();
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options?.headers,
-    },
-  });
-  if (res.status === 401) {
-    await signOut();
-    const currentPath = window.location.pathname;
-    if (currentPath !== "/login" && !currentPath.startsWith("/auth/")) {
-      window.location.href = "/login";
+  const method = (options?.method || "GET").toUpperCase();
+  const dedupeKey = method === "GET" ? `${method}:${path}:${token || ""}` : "";
+
+  if (dedupeKey) {
+    const pending = inflightRequests.get(dedupeKey);
+    if (pending) {
+      return pending as Promise<T>;
     }
-    throw new Error("Unauthorized");
   }
-  if (!res.ok) {
-    let details = "";
-    try {
-      details = await res.text();
-    } catch {
-      // ignore
+
+  const promise = (async () => {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options?.headers,
+      },
+    });
+    if (res.status === 401) {
+      await signOut();
+      const currentPath = window.location.pathname;
+      if (currentPath !== "/login" && !currentPath.startsWith("/auth/")) {
+        window.location.href = "/login";
+      }
+      throw new Error("Unauthorized");
     }
-    throw new ApiError(`API error: ${res.status}`, res.status, details || undefined);
+    if (!res.ok) {
+      let details = "";
+      try {
+        details = await res.text();
+      } catch {
+        // ignore
+      }
+      throw new ApiError(`API error: ${res.status}`, res.status, details || undefined);
+    }
+    return res.json() as Promise<T>;
+  })();
+
+  if (dedupeKey) {
+    inflightRequests.set(dedupeKey, promise);
+    promise.finally(() => {
+      inflightRequests.delete(dedupeKey);
+    });
   }
-  return res.json();
+
+  return promise;
 }
 
 /** GET 요청에 대해 캐시된 데이터를 즉시 반환하고 백그라운드에서 revalidate */
-async function cachedGet<T>(path: string, cacheKey?: string): Promise<T> {
+export async function cachedGet<T>(path: string, cacheKey?: string): Promise<T> {
   const key = cacheKey || path;
   const cached = getCached<T>(key);
 
@@ -138,6 +160,8 @@ export const api = {
 
   // 관심종목
   getWatchlist: () => request<{ watchlist: WatchlistItem[] }>("/api/watchlist"),
+  getWatchlistOverview: () =>
+    request<{ watchlist: WatchlistItem[]; dividend_events: DividendCalendarEvent[] }>("/api/watchlist/overview"),
   addToWatchlist: (item: { corp_code: string; corp_name: string; stock_code: string }) =>
     request<{ watchlist: WatchlistItem[] }>("/api/watchlist", {
       method: "POST",
@@ -171,9 +195,20 @@ export const api = {
       `/api/disclosures/public${qs ? `?${qs}` : ""}`
     );
   },
+  getPublicDisclosurePreview: (params?: { days?: number; limit?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.days) q.set("days", String(params.days));
+    if (params?.limit) q.set("limit", String(params.limit));
+    const qs = q.toString();
+    return request<{ disclosures: DisclosurePreview[]; total: number; pending_analysis: number }>(
+      `/api/disclosures/public/preview${qs ? `?${qs}` : ""}`
+    );
+  },
 
   // 대시보드
   getDashboardSummary: () => request<DashboardSummary>("/api/dashboard/summary"),
+  getDashboardBootstrap: (historyDays = 14) =>
+    request<DashboardBootstrap>(`/api/dashboard/bootstrap?history_days=${historyDays}`),
 
   getPublicDashboard: () =>
     request<DashboardSummary>("/api/dashboard/public"),
@@ -239,6 +274,16 @@ export const api = {
   getCompanyShareholders: (corpCode: string) =>
     request<{ shareholders: ShareholderInfo[] }>(`/api/company/${corpCode}/shareholders`),
 
+  // 배당 캘린더
+  getDividendCalendar: (years?: number) => {
+    const qs = years ? `?years=${years}` : "";
+    return request<{ events: DividendCalendarEvent[] }>(`/api/dividends/calendar${qs}`);
+  },
+  getCompanyDividendCalendar: (corpCode: string, years?: number) => {
+    const qs = years ? `?years=${years}` : "";
+    return request<{ event: DividendCalendarEvent | null }>(`/api/dividends/calendar/${corpCode}${qs}`);
+  },
+
   // 브리핑
   getDailyBriefing: () => request<DailyBriefing>("/api/briefing/daily"),
 
@@ -286,6 +331,15 @@ export interface Disclosure {
   analysis: DisclosureAnalysis | null;
 }
 
+export interface DisclosurePreview {
+  rcept_no: string;
+  rcept_dt: string;
+  corp_name: string;
+  corp_code: string;
+  report_nm: string;
+  analysis: DisclosureAnalysis | null;
+}
+
 export interface DashboardSummary {
   watchlist_count: number;
   today_disclosures: number;
@@ -293,6 +347,12 @@ export interface DashboardSummary {
   bearish: number;
   important_disclosures: Disclosure[];
   recent_disclosures: Disclosure[];
+}
+
+export interface DashboardBootstrap {
+  summary: DashboardSummary;
+  history: HistoryDataPoint[];
+  briefing: DailyBriefing;
 }
 
 export interface AppSettings {
@@ -336,6 +396,23 @@ export interface FinancialYear {
 export interface DividendYear {
   year: string;
   dividends: Array<Record<string, string>>;
+}
+
+export interface DividendCalendarEvent {
+  corp_code: string;
+  corp_name: string;
+  stock_code: string;
+  status: "expected" | "unknown";
+  event_type: "record_date";
+  next_event_date: string;
+  recent_dps: number;
+  recent_dps_raw: string;
+  yield_pct: number | null;
+  payout_pct: number | null;
+  change_vs_prev_year: "increase" | "flat" | "decrease" | "no_dividend" | "new" | "unknown";
+  source_year: string;
+  reference_date: string;
+  note: string;
 }
 
 export interface ShareholderInfo {

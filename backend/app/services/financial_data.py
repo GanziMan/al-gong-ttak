@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select
 
@@ -14,6 +15,15 @@ from app.services.dart_client import DartClient
 logger = logging.getLogger(__name__)
 
 CACHE_TTL_HOURS = 24
+
+DIVIDEND_CHANGE_ORDER = {
+    "increase": 0,
+    "flat": 1,
+    "decrease": 2,
+    "no_dividend": 3,
+    "new": 4,
+    "unknown": 5,
+}
 
 
 def _is_cache_fresh(fetched_at: str) -> bool:
@@ -132,6 +142,156 @@ def _parse_amount(val: str) -> int:
         return int(val.replace(",", "").replace(" ", "").replace("-", "0"))
     except (ValueError, TypeError):
         return 0
+
+
+def _parse_float(val: Any) -> float | None:
+    if val is None:
+        return None
+    text = str(val).replace(",", "").replace("%", "").strip()
+    if not text or text == "-":
+        return None
+    try:
+        return float(text)
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_int(val: Any) -> int | None:
+    parsed = _parse_float(val)
+    if parsed is None:
+        return None
+    return int(round(parsed))
+
+
+def _find_dividend_value(items: list[dict], label: str, field: str = "thstrm") -> str:
+    row = next((item for item in items if item.get("se") == label), None)
+    if not row:
+        return ""
+    return str(row.get(field, "")).strip()
+
+
+def _pick_reference_date(items: list[dict]) -> str:
+    for item in items:
+        stlm_dt = str(item.get("stlm_dt", "")).strip()
+        if stlm_dt:
+            return stlm_dt
+    return ""
+
+
+def _build_dividend_year_summary(year_data: dict) -> dict | None:
+    items = year_data.get("dividends", [])
+    if not items:
+        return None
+
+    dps_raw = _find_dividend_value(items, "주당 현금배당금(원)")
+    yield_raw = _find_dividend_value(items, "현금배당수익률(%)")
+    payout_raw = _find_dividend_value(items, "현금배당성향(%)")
+    record_date = _pick_reference_date(items)
+
+    return {
+        "year": year_data.get("year", ""),
+        "record_date": record_date,
+        "dps_raw": dps_raw,
+        "dps": _safe_int(dps_raw) or 0,
+        "yield_pct": _parse_float(yield_raw),
+        "payout_pct": _parse_float(payout_raw),
+    }
+
+
+def _compare_dividend(latest: dict, previous: dict | None) -> str:
+    latest_dps = latest.get("dps", 0)
+    previous_dps = previous.get("dps", 0) if previous else None
+
+    if latest_dps <= 0:
+        return "no_dividend"
+    if previous_dps is None:
+        return "new"
+    if previous_dps <= 0:
+        return "new"
+    if latest_dps > previous_dps:
+        return "increase"
+    if latest_dps < previous_dps:
+        return "decrease"
+    return "flat"
+
+
+def _estimate_next_record_date(record_date: str) -> str:
+    if not record_date:
+        return ""
+    try:
+        dt = datetime.strptime(record_date, "%Y-%m-%d")
+    except ValueError:
+        return ""
+
+    now = datetime.now()
+    candidate = dt.replace(year=now.year)
+    if candidate.date() < now.date():
+        candidate = candidate.replace(year=now.year + 1)
+    return candidate.strftime("%Y-%m-%d")
+
+
+def build_dividend_calendar_event(
+    corp_code: str,
+    corp_name: str,
+    stock_code: str,
+    dividend_history: list[dict],
+) -> dict | None:
+    summaries = [
+        summary
+        for summary in (_build_dividend_year_summary(row) for row in dividend_history)
+        if summary
+    ]
+    summaries.sort(key=lambda item: item.get("year", ""), reverse=True)
+
+    if not summaries:
+        return None
+
+    latest = summaries[0]
+    previous = summaries[1] if len(summaries) > 1 else None
+    next_record_date = _estimate_next_record_date(latest.get("record_date", ""))
+
+    return {
+        "corp_code": corp_code,
+        "corp_name": corp_name,
+        "stock_code": stock_code,
+        "status": "expected" if next_record_date else "unknown",
+        "event_type": "record_date",
+        "next_event_date": next_record_date,
+        "recent_dps": latest.get("dps", 0),
+        "recent_dps_raw": latest.get("dps_raw", ""),
+        "yield_pct": latest.get("yield_pct"),
+        "payout_pct": latest.get("payout_pct"),
+        "change_vs_prev_year": _compare_dividend(latest, previous),
+        "source_year": latest.get("year", ""),
+        "reference_date": latest.get("record_date", ""),
+        "note": "최근 사업보고서 결산기준일을 바탕으로 계산한 예상 일정" if next_record_date else "배당 기준일 정보가 부족해 예상 일정을 계산하지 못했습니다.",
+    }
+
+
+async def get_watchlist_dividend_calendar(
+    dart_client: DartClient,
+    watchlist: list[dict],
+    years: int = 5,
+) -> list[dict]:
+    async def _build(item: dict) -> dict | None:
+        history = await get_dividend_history(dart_client, item["corp_code"], years=years)
+        return build_dividend_calendar_event(
+            corp_code=item["corp_code"],
+            corp_name=item["corp_name"],
+            stock_code=item.get("stock_code", ""),
+            dividend_history=history,
+        )
+
+    events = await asyncio.gather(*[_build(item) for item in watchlist])
+    filtered = [event for event in events if event]
+    filtered.sort(
+        key=lambda event: (
+            event.get("next_event_date", "9999-12-31") or "9999-12-31",
+            DIVIDEND_CHANGE_ORDER.get(event.get("change_vs_prev_year", "unknown"), 99),
+            event.get("corp_name", ""),
+        )
+    )
+    return filtered
 
 
 async def get_all_company_data(
@@ -261,9 +421,9 @@ async def _fetch_dart(dart_client: DartClient, data_type: str, corp_code: str, b
 async def get_financial_summary(dart_client: DartClient, corp_code: str, years: int = 5) -> list[dict]:
     current_year = datetime.now().year
     year_list = [str(y) for y in range(current_year - years, current_year)]
+    cache = await _batch_get_cached(corp_code)
 
     async def _fetch_one(bsns_year: str) -> dict:
-        cache = await _batch_get_cached(corp_code)
         cached = cache.get(("financial", bsns_year, "11011"))
         if cached is not None:
             return {"year": bsns_year, "accounts": cached}
@@ -281,9 +441,9 @@ async def get_financial_summary(dart_client: DartClient, corp_code: str, years: 
 async def get_dividend_history(dart_client: DartClient, corp_code: str, years: int = 5) -> list[dict]:
     current_year = datetime.now().year
     year_list = [str(y) for y in range(current_year - years, current_year)]
+    cache = await _batch_get_cached(corp_code)
 
     async def _fetch_one(bsns_year: str) -> dict:
-        cache = await _batch_get_cached(corp_code)
         cached = cache.get(("dividend", bsns_year, "11011"))
         if cached is not None:
             return {"year": bsns_year, "dividends": cached}
@@ -300,10 +460,10 @@ async def get_dividend_history(dart_client: DartClient, corp_code: str, years: i
 
 async def get_shareholders(dart_client: DartClient, corp_code: str) -> list[dict]:
     current_year = datetime.now().year
+    cache = await _batch_get_cached(corp_code)
 
     for year in range(current_year, current_year - 3, -1):
         bsns_year = str(year)
-        cache = await _batch_get_cached(corp_code)
         cached = cache.get(("shareholder", bsns_year, "11011"))
         if cached is not None:
             return cached

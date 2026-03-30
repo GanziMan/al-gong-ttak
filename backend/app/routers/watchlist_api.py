@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.services.watchlist import load_watchlist, add_stock, remove_stock
+from app.services.user_snapshot import get_user_watchlist_overview_snapshot
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -24,6 +25,14 @@ async def get_watchlist(user: User = Depends(get_current_user)):
     result = await load_watchlist(user.id)
     logger.info("load_watchlist took %.0fms", (time.time() - t0) * 1000)
     return {"watchlist": result}
+
+
+@router.get("/overview")
+async def get_watchlist_overview(user: User = Depends(get_current_user)):
+    t0 = time.time()
+    overview = await get_user_watchlist_overview_snapshot(user.id)
+    logger.info("load_watchlist_overview took %.0fms", (time.time() - t0) * 1000)
+    return overview
 
 
 @router.post("")

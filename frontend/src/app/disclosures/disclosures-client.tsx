@@ -16,9 +16,10 @@ import { cn } from "@/lib/utils";
 
 interface DisclosuresClientProps {
   initialDisclosures: Disclosure[];
+  initialPendingAnalysis?: number;
 }
 
-function DisclosuresContent({ initialDisclosures }: DisclosuresClientProps) {
+function DisclosuresContent({ initialDisclosures, initialPendingAnalysis = 0 }: DisclosuresClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const corpCode = searchParams.get("corp_code");
@@ -130,11 +131,11 @@ function DisclosuresContent({ initialDisclosures }: DisclosuresClientProps) {
     }
 
     if (!isLoggedIn) {
-      if (initialDisclosures.length > 0) {
+      if (canUseInitialPublicData) {
         if (!isPolling) {
           if (isStale()) return;
           setDisclosures(initialDisclosures);
-          setPendingAnalysis(0);
+          setPendingAnalysis(initialPendingAnalysis);
           setLoading(false);
           setError("");
         }
@@ -209,7 +210,7 @@ function DisclosuresContent({ initialDisclosures }: DisclosuresClientProps) {
         // 폴링 실패는 무시
       }
     }
-  }, [days, category, minScore, corpCode, isLoggedIn, initialDisclosures, toErrorMessage]);
+  }, [days, category, minScore, corpCode, isLoggedIn, initialDisclosures, initialPendingAnalysis, toErrorMessage]);
 
   useEffect(() => {
     if (corpCode) setLoading(true);
@@ -513,3 +514,4 @@ export function DisclosuresClient({ initialDisclosures }: DisclosuresClientProps
     </Suspense>
   );
 }
+  const canUseInitialPublicData = !corpCode && !isLoggedIn && category === "all" && days === 30 && minScore === 0 && initialDisclosures.length > 0;

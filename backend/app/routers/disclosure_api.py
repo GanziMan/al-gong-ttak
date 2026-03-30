@@ -12,7 +12,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.services.dart_client import DartClient
 from app.services.disclosure_filter import get_watchlist_disclosures
-from app.services.analysis_cache import get_cached_analysis, get_cached_full, save_analysis
+from app.services.analysis_cache import get_cached_analysis, get_cached_analyses, get_cached_full, save_analysis
 from app.services.dart_cache import get_cached_disclosures, set_cached_disclosures
 from app.services.settings import load_settings
 from app.services.telegram import send_alert, format_disclosure_alert
@@ -53,6 +53,27 @@ def _normalize_analysis(analysis: dict | None) -> dict | None:
     category = normalized.get("category", "단순정보")
     normalized["action_item"] = _normalize_action_item(category, normalized.get("action_item", ""))
     return normalized
+
+
+def _to_preview_item(disclosure: dict) -> dict:
+    analysis = disclosure.get("analysis")
+    return {
+        "rcept_no": disclosure.get("rcept_no", ""),
+        "rcept_dt": disclosure.get("rcept_dt", ""),
+        "corp_name": disclosure.get("corp_name", ""),
+        "corp_code": disclosure.get("corp_code", ""),
+        "report_nm": disclosure.get("report_nm", ""),
+        "analysis": (
+            {
+                "category": analysis.get("category", ""),
+                "importance_score": analysis.get("importance_score", 0),
+                "summary": analysis.get("summary", ""),
+                "action_item": analysis.get("action_item", ""),
+            }
+            if analysis
+            else None
+        ),
+    }
 
 
 async def _fetch_document_text(rcept_no: str) -> str:
@@ -213,6 +234,20 @@ async def get_public_disclosures(
     min_score: int = Query(0, ge=0, le=100),
     corp_code: str = Query(None, description="특정 기업 코드로 필터링"),
 ):
+    return await _get_public_disclosures_impl(
+        days=days,
+        category=category,
+        min_score=min_score,
+        corp_code=corp_code,
+    )
+
+
+async def _get_public_disclosures_impl(
+    days: int,
+    category: str | None = None,
+    min_score: int = 0,
+    corp_code: str | None = None,
+):
     dart_client = DartClient(api_key=settings.dart_api_key)
     now = datetime.now()
     today = now.strftime("%Y%m%d")
@@ -248,16 +283,11 @@ async def get_public_disclosures(
 
     disclosures = list(cached_list)
 
-    # 분석 캐시 병렬 조회
-    async def _get_analysis(rcept_no: str):
-        if not rcept_no:
-            return None
-        return await get_cached_analysis(rcept_no)
-
-    cached_results = await asyncio.gather(*[_get_analysis(d.get("rcept_no", "")) for d in disclosures])
+    analysis_map = await get_cached_analyses([d.get("rcept_no", "") for d in disclosures])
 
     pending = []
-    for d, cached in zip(disclosures, cached_results):
+    for d in disclosures:
+        cached = analysis_map.get(d.get("rcept_no", ""))
         d["analysis"] = _normalize_analysis(cached)
         if cached is None:
             pending.append(d)
@@ -278,6 +308,19 @@ async def get_public_disclosures(
         "disclosures": results,
         "total": len(results),
         "pending_analysis": len(pending),
+    }
+
+
+@router.get("/public/preview")
+async def get_public_disclosures_preview(
+    days: int = Query(3, ge=1, le=30),
+    limit: int = Query(10, ge=1, le=20),
+):
+    data = await _get_public_disclosures_impl(days=days)
+    return {
+        "disclosures": [_to_preview_item(d) for d in data["disclosures"][:limit]],
+        "total": data["total"],
+        "pending_analysis": data["pending_analysis"],
     }
 
 
@@ -308,16 +351,11 @@ async def get_disclosures(
     dart_client = DartClient(api_key=settings.dart_api_key)
     disclosures = await get_watchlist_disclosures(dart_client, days=days, user_id=user.id)
 
-    # 분석 캐시를 병렬로 조회
-    async def _get_analysis(rcept_no: str):
-        if not rcept_no:
-            return None
-        return await get_cached_analysis(rcept_no)
-
-    cached_results = await asyncio.gather(*[_get_analysis(d.get("rcept_no", "")) for d in disclosures])
+    analysis_map = await get_cached_analyses([d.get("rcept_no", "") for d in disclosures])
 
     pending = []
-    for d, cached in zip(disclosures, cached_results):
+    for d in disclosures:
+        cached = analysis_map.get(d.get("rcept_no", ""))
         d["analysis"] = _normalize_analysis(cached)
         if cached is None:
             pending.append(d)

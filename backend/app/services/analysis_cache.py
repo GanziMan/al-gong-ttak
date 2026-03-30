@@ -19,6 +19,24 @@ async def get_cached_analysis(rcept_no: str) -> dict | None:
         return row.analysis
 
 
+async def get_cached_analyses(rcept_nos: list[str]) -> dict[str, dict]:
+    keys = [rcept_no for rcept_no in dict.fromkeys(rcept_nos) if rcept_no]
+    if not keys:
+        return {}
+
+    async with async_session() as session:
+        result = await session.execute(
+            select(AnalysisCache).where(AnalysisCache.rcept_no.in_(keys))
+        )
+        rows = result.scalars().all()
+
+    return {
+        row.rcept_no: row.analysis
+        for row in rows
+        if row.analysis
+    }
+
+
 async def save_analysis(rcept_no: str, analysis: dict, metadata: dict | None = None):
     async with async_session() as session:
         row = await session.get(AnalysisCache, rcept_no)

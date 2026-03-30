@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import select, text
@@ -22,12 +23,13 @@ from app.routers.disclosure_api import _enrich_one, _analyze_batch_public
 from app.services.settings import load_settings
 from app.services.telegram import send_alert, format_disclosure_alert, format_keyword_alert
 from app.models.watchlist import Watchlist
-from app.routers import corp_search_api, watchlist_api, disclosure_api, dashboard_api, settings_api, bookmarks_api, auth_api, financial_api, briefing_api
+from app.routers import corp_search_api, watchlist_api, disclosure_api, dashboard_api, settings_api, bookmarks_api, auth_api, financial_api, briefing_api, dividend_api
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 AUTO_SCAN_INTERVAL = 30 * 60  # 30분
+SLOW_REQUEST_MS = 800
 
 
 async def _get_active_user_ids() -> list[int]:
@@ -223,6 +225,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def add_request_timing(request: Request, call_next):
+    started = time.perf_counter()
+    response = await call_next(request)
+    elapsed_ms = (time.perf_counter() - started) * 1000
+    response.headers["X-Response-Time"] = f"{elapsed_ms:.1f}ms"
+    response.headers["Server-Timing"] = f"app;dur={elapsed_ms:.1f}"
+
+    if request.url.path.startswith("/api/"):
+        logger.info(
+            "API %s %s -> %s in %.1fms",
+            request.method,
+            request.url.path,
+            response.status_code,
+            elapsed_ms,
+        )
+        if elapsed_ms >= SLOW_REQUEST_MS:
+            logger.warning(
+                "Slow API %s %s took %.1fms",
+                request.method,
+                request.url.path,
+                elapsed_ms,
+            )
+
+    return response
+
 app.include_router(auth_api.router, prefix="/api/auth", tags=["인증"])
 app.include_router(corp_search_api.router, prefix="/api/corps", tags=["기업 검색"])
 app.include_router(watchlist_api.router, prefix="/api/watchlist", tags=["관심종목"])
@@ -232,6 +261,7 @@ app.include_router(settings_api.router, prefix="/api/settings", tags=["설정"])
 app.include_router(bookmarks_api.router, prefix="/api/bookmarks", tags=["북마크"])
 app.include_router(financial_api.router, prefix="/api/company", tags=["기업 재무"])
 app.include_router(briefing_api.router, prefix="/api/briefing", tags=["브리핑"])
+app.include_router(dividend_api.router, prefix="/api/dividends", tags=["배당"])
 
 
 @app.get("/health")

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { DisclosuresClient } from "./disclosures-client";
 import type { Disclosure } from "@/lib/api";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { getPublicDisclosuresData } from "../public-data";
 
 export const revalidate = 300;
 
@@ -32,18 +31,18 @@ export async function generateMetadata({
 
 export default async function DisclosuresPage() {
   let initialDisclosures: Disclosure[] = [];
+  let initialPendingAnalysis = 0;
 
-  try {
-    const res = await fetch(`${API_BASE}/api/disclosures/public?days=30`, {
-      next: { revalidate },
-    });
-    if (res.ok) {
-      const data: { disclosures: Disclosure[] } = await res.json();
-      initialDisclosures = data.disclosures;
-    }
-  } catch {
-    // 네트워크 실패 시 클라이언트 폴백 사용
+  const data = await getPublicDisclosuresData(30);
+  if (data) {
+    initialDisclosures = data.disclosures;
+    initialPendingAnalysis = data.pendingAnalysis;
   }
 
-  return <DisclosuresClient initialDisclosures={initialDisclosures} />;
+  return (
+    <DisclosuresClient
+      initialDisclosures={initialDisclosures}
+      initialPendingAnalysis={initialPendingAnalysis}
+    />
+  );
 }

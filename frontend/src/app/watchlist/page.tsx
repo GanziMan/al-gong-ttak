@@ -6,24 +6,27 @@ import { StockSearch } from "@/components/stock-search";
 import { WatchlistTable } from "@/components/watchlist-table";
 import { PopularStocks } from "@/components/popular-stocks";
 import { SectorAdd } from "@/components/sector-add";
-import { api, getCached, setCache, isFresh, Corp, WatchlistItem } from "@/lib/api";
+import { DividendCalendar } from "@/components/dividend-calendar";
+import { api, getCached, setCache, isFresh, Corp, DividendCalendarEvent, WatchlistItem } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WatchlistPage() {
-  const CACHE_KEY = "/api/watchlist";
-  const cached = getCached<{ watchlist: WatchlistItem[] }>(CACHE_KEY);
+  const CACHE_KEY = "/api/watchlist/overview";
+  const cached = getCached<{ watchlist: WatchlistItem[]; dividend_events: DividendCalendarEvent[] }>(CACHE_KEY);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(cached?.watchlist ?? []);
+  const [dividendEvents, setDividendEvents] = useState<DividendCalendarEvent[]>(cached?.dividend_events ?? []);
   const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState("");
 
-  const fetchWatchlist = useCallback(async () => {
+  const fetchOverview = useCallback(async () => {
     try {
-      const data = await api.getWatchlist();
+      const data = await api.getWatchlistOverview();
       setWatchlist(data.watchlist);
+      setDividendEvents(data.dividend_events);
       setCache(CACHE_KEY, data);
       setError("");
     } catch {
-      if (!watchlist.length) setError("관심종목을 불러올 수 없습니다. 백엔드 서버를 확인하세요.");
+      setError("관심종목을 불러올 수 없습니다. 백엔드 서버를 확인하세요.");
     } finally {
       setLoading(false);
     }
@@ -32,10 +35,10 @@ export default function WatchlistPage() {
   useEffect(() => {
     if (cached && isFresh(CACHE_KEY)) {
       setLoading(false);
-      return;
+    } else {
+      fetchOverview();
     }
-    fetchWatchlist();
-  }, [fetchWatchlist]);
+  }, [cached, fetchOverview]);
 
   const existingCodes = useMemo(
     () => new Set(watchlist.map((w) => w.corp_code)),
@@ -66,6 +69,7 @@ export default function WatchlistPage() {
         stock_code: corp.stock_code,
       });
       setWatchlist(data.watchlist);
+      fetchOverview();
     } catch {
       // 실패 시 롤백
       setWatchlist(prev);
@@ -84,6 +88,7 @@ export default function WatchlistPage() {
     try {
       const data = await api.removeFromWatchlist(corpCode);
       setWatchlist(data.watchlist);
+      fetchOverview();
     } catch {
       // 실패 시 롤백
       setWatchlist(prev);
@@ -116,6 +121,12 @@ export default function WatchlistPage() {
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[12px] text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
           {error}
         </div>
+      )}
+
+      {loading ? (
+        <Skeleton className="h-72 rounded-2xl" />
+      ) : (
+        <DividendCalendar events={dividendEvents} />
       )}
 
       {loading ? (

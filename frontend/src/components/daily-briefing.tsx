@@ -3,19 +3,25 @@
 import { useState, useEffect } from "react";
 import { Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import Link from "next/link";
-import { api, getCached, setCache, isFresh, type DailyBriefing as BriefingType } from "@/lib/api";
+import { cachedGet, getCached, type DailyBriefing as BriefingType } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { categoryColor, categoryLabel, shouldShowScore } from "@/lib/disclosure-utils";
 import { cn } from "@/lib/utils";
 
-export function DailyBriefing() {
+interface DailyBriefingProps {
+  initialData?: BriefingType | null;
+}
+
+export function DailyBriefing({ initialData = null }: DailyBriefingProps) {
   const CACHE_KEY = "/api/briefing/daily";
-  const [data, setData] = useState<BriefingType | null>(() => getCached<BriefingType>(CACHE_KEY));
+  const [data, setData] = useState<BriefingType | null>(() => initialData ?? getCached<BriefingType>(CACHE_KEY));
 
   useEffect(() => {
-    if (data && isFresh(CACHE_KEY)) return;
-    api.getDailyBriefing().then((d) => { setData(d); setCache(CACHE_KEY, d); }).catch(() => {});
-  }, []);
+    if (initialData) {
+      return;
+    }
+    cachedGet<BriefingType>("/api/briefing/daily", CACHE_KEY).then(setData).catch(() => {});
+  }, [initialData]);
 
   return (
     <div className="rounded-2xl bg-gradient-to-r from-primary/5 via-violet-500/5 to-transparent border border-primary/10 px-5 py-4">

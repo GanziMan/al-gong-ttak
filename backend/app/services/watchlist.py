@@ -6,9 +6,19 @@ import time
 from sqlalchemy import select, delete, and_
 from app.database import async_session
 from app.models.watchlist import Watchlist
+from app.services.response_cache import invalidate
 
 _WATCHLIST_CACHE_TTL = 60
 _watchlist_cache: dict[int, tuple[list[dict], float]] = {}
+
+
+def invalidate_user_caches(user_id: int) -> None:
+    invalidate(f"dashboard:bootstrap:{user_id}:")
+    invalidate(f"dashboard:summary:{user_id}")
+    invalidate(f"dashboard:history:{user_id}:")
+    invalidate(f"user-snapshot:disclosures:{user_id}:")
+    invalidate(f"user-snapshot:overview:{user_id}")
+    invalidate("briefing:")
 
 
 async def load_watchlist(user_id: int) -> list[dict]:
@@ -35,6 +45,7 @@ async def add_stock(user_id: int, corp_code: str, corp_name: str, stock_code: st
         session.add(Watchlist(user_id=user_id, corp_code=corp_code, corp_name=corp_name, stock_code=stock_code))
         await session.commit()
     _watchlist_cache.pop(user_id, None)
+    invalidate_user_caches(user_id)
     return await load_watchlist(user_id)
 
 
@@ -45,4 +56,5 @@ async def remove_stock(user_id: int, corp_code: str) -> list[dict]:
         )
         await session.commit()
     _watchlist_cache.pop(user_id, None)
+    invalidate_user_caches(user_id)
     return await load_watchlist(user_id)

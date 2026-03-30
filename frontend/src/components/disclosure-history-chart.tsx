@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { BarChart3 } from "lucide-react";
-import { api, fetchWithRevalidate, getCached, HistoryDataPoint } from "@/lib/api";
+import { fetchWithRevalidate, getCached, HistoryDataPoint } from "@/lib/api";
 import { formatDateShort } from "@/lib/disclosure-utils";
 import { cn } from "@/lib/utils";
 
@@ -43,16 +43,25 @@ const PERIOD_OPTIONS = [
   { label: "30일", value: 30 },
 ];
 
-export function DisclosureHistoryChart() {
+interface DisclosureHistoryChartProps {
+  initialHistory?: HistoryDataPoint[];
+}
+
+export function DisclosureHistoryChart({ initialHistory }: DisclosureHistoryChartProps) {
   const [days, setDays] = useState(14);
   const [data, setData] = useState<HistoryDataPoint[]>(() => {
+    if (initialHistory) {
+      return initialHistory;
+    }
     const cached = getCached<{ history: HistoryDataPoint[] }>(`history_14`);
     return cached?.history ?? [];
   });
-  const [loading, setLoading] = useState(() => !getCached("history_14"));
+  const [loading, setLoading] = useState(() => !initialHistory && !getCached("history_14"));
 
   useEffect(() => {
-    setLoading(true);
+    if (days === 14 && initialHistory) {
+      return;
+    }
     fetchWithRevalidate<{ history: HistoryDataPoint[] }>(
       `/api/dashboard/history?days=${days}`,
       (fresh) => setData(fresh.history),
@@ -61,7 +70,7 @@ export function DisclosureHistoryChart() {
       .then((cached) => { if (cached) setData(cached.history); })
       .catch(() => setData([]))
       .finally(() => setLoading(false));
-  }, [days]);
+  }, [days, initialHistory]);
 
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
@@ -74,7 +83,11 @@ export function DisclosureHistoryChart() {
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.value}
-              onClick={() => setDays(opt.value)}
+              onClick={() => {
+                if (days === opt.value) return;
+                setLoading(true);
+                setDays(opt.value);
+              }}
               className={cn(
                 "px-2.5 py-1 text-[10px] font-medium rounded-md transition-colors",
                 days === opt.value

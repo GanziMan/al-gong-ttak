@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -11,7 +11,7 @@ import {
   Shield,
   Star,
 } from "lucide-react";
-import { api, DashboardSummary, Disclosure } from "@/lib/api";
+import { api, DashboardSummary, DisclosurePreview } from "@/lib/api";
 import { DisclosureCard } from "@/components/disclosure-card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -55,7 +55,7 @@ const features = [
 
 interface LandingProps {
   summary?: DashboardSummary | null;
-  disclosures?: Disclosure[];
+  disclosures?: DisclosurePreview[];
 }
 
 export function Landing({
@@ -69,10 +69,30 @@ export function Landing({
   const [summary, setSummary] = useState<DashboardSummary | null>(
     initialSummary ?? null,
   );
-  const [disclosures, setDisclosures] = useState<Disclosure[]>(
+  const [disclosures, setDisclosures] = useState<DisclosurePreview[]>(
     initialDisclosures ?? [],
   );
   const [loading, setLoading] = useState(!hasServerData);
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollDelayRef = useRef(5000);
+
+  const applyPublicData = useCallback((discData: { disclosures: DisclosurePreview[]; total: number }) => {
+    setDisclosures(discData.disclosures.slice(0, 10));
+    setSummary((prev) =>
+      prev
+        ? {
+            ...prev,
+            today_disclosures: discData.total,
+            bullish: discData.disclosures.filter(
+              (d) => d.analysis?.category === "호재",
+            ).length,
+            bearish: discData.disclosures.filter(
+              (d) => d.analysis?.category === "악재",
+            ).length,
+          }
+        : prev,
+    );
+  }, []);
 
   // summary가 없으면 클라이언트에서 반드시 재조회 (서버 fetch 부분 실패 복구)
   useEffect(() => {
@@ -81,7 +101,7 @@ export function Landing({
       try {
         const [dashData, discData] = await Promise.all([
           api.getPublicDashboard(),
-          api.getPublicDisclosures({ days: 3 }),
+          api.getPublicDisclosurePreview({ days: 3, limit: 10 }),
         ]);
         setSummary({
           ...dashData,
@@ -93,7 +113,7 @@ export function Landing({
             (d) => d.analysis?.category === "악재",
           ).length,
         });
-        setDisclosures(discData.disclosures.slice(0, 10));
+        applyPublicData(discData);
       } catch {
         // silent
       } finally {
@@ -101,50 +121,63 @@ export function Landing({
       }
     }
     load();
-  }, [shouldRefetch]);
+  }, [applyPublicData, shouldRefetch]);
 
   // 미분석 공시가 있으면 5초 간격 폴링으로 분석 완료 반영
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasPending = disclosures.some((d) => !d.analysis);
 
   useEffect(() => {
     if (!hasPending) {
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current);
+        pollTimeoutRef.current = null;
       }
       return;
     }
-    pollRef.current = setInterval(async () => {
-      try {
-        const data = await api.getPublicDisclosures({ days: 3 });
-        const fresh = data.disclosures.slice(0, 10);
-        setDisclosures(fresh);
-        setSummary((prev) =>
-          prev
-            ? {
-                ...prev,
-                today_disclosures: data.total,
-                bullish: data.disclosures.filter(
-                  (d) => d.analysis?.category === "호재",
-                ).length,
-                bearish: data.disclosures.filter(
-                  (d) => d.analysis?.category === "악재",
-                ).length,
-              }
-            : prev,
-        );
-      } catch {
-        // silent
+
+    let cancelled = false;
+    pollDelayRef.current = 5000;
+
+    const tick = async () => {
+      if (cancelled) return;
+      if (document.visibilityState !== "visible") {
+        pollTimeoutRef.current = setTimeout(tick, 15000);
+        return;
       }
-    }, 5000);
-    return () => {
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
+
+      try {
+        const data = await api.getPublicDisclosurePreview({ days: 3, limit: 10 });
+        applyPublicData(data);
+        if (!data.disclosures.some((d) => !d.analysis)) {
+          pollTimeoutRef.current = null;
+          return;
+        }
+        pollDelayRef.current = Math.min(Math.round(pollDelayRef.current * 1.5), 30000);
+      } catch {
+        pollDelayRef.current = Math.min(Math.round(pollDelayRef.current * 2), 30000);
+      }
+
+      pollTimeoutRef.current = setTimeout(tick, pollDelayRef.current);
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && !pollTimeoutRef.current) {
+        pollTimeoutRef.current = setTimeout(tick, 1000);
       }
     };
-  }, [hasPending]);
+
+    pollTimeoutRef.current = setTimeout(tick, pollDelayRef.current);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current);
+        pollTimeoutRef.current = null;
+      }
+    };
+  }, [applyPublicData, hasPending]);
 
   return (
     <div className="space-y-20 pb-12">

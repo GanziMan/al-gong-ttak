@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { api, AuthUser } from "@/lib/api";
+import { api, AuthUser, cachedGet, type DashboardBootstrap, type DividendCalendarEvent, type WatchlistItem } from "@/lib/api";
 import { getSupabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 
@@ -28,6 +28,13 @@ function userFromSession(session: Session): AuthUser {
   };
 }
 
+function prewarmUserData() {
+  void Promise.allSettled([
+    cachedGet<DashboardBootstrap>("/api/dashboard/bootstrap?history_days=14"),
+    cachedGet<{ watchlist: WatchlistItem[]; dividend_events: DividendCalendarEvent[] }>("/api/watchlist/overview"),
+  ]);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,11 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 즉시 세션 데이터로 유저 표시
     setUser(userFromSession(session));
     setIsLoading(false);
+    prewarmUserData();
 
     // 백그라운드에서 백엔드 유저 정보로 갱신 (내부 id 등)
     try {
       const me = await api.getMe();
       setUser(me);
+      prewarmUserData();
     } catch {
       // 백엔드 실패해도 세션 기반 유저는 유지
     }

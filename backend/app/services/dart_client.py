@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import re
+import time
 import zipfile
 from typing import Optional
 import httpx
@@ -13,6 +14,7 @@ DART_BASE_URL = "https://opendart.fss.or.kr/api"
 DEFAULT_TIMEOUT = 30
 DOCUMENT_TIMEOUT = 60  # 본문 다운로드는 더 오래 걸릴 수 있음
 MAX_CONTENT_LENGTH = 3000  # AI에 전달할 최대 글자 수
+SLOW_DART_MS = 700
 
 
 class DartClient:
@@ -20,6 +22,14 @@ class DartClient:
 
     def __init__(self, api_key: str):
         self.api_key = api_key
+
+    @staticmethod
+    def _log_timing(endpoint: str, started: float, **fields: object) -> None:
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        details = " ".join(f"{key}={value}" for key, value in fields.items() if value not in (None, "", 0))
+        logger.info("DART %s in %.1fms%s%s", endpoint, elapsed_ms, " " if details else "", details)
+        if elapsed_ms >= SLOW_DART_MS:
+            logger.warning("Slow DART %s took %.1fms", endpoint, elapsed_ms)
 
     @classmethod
     async def _get_client(cls) -> httpx.AsyncClient:
@@ -42,6 +52,7 @@ class DartClient:
         page_count: int = 20,
     ) -> dict:
         """공시 목록 조회"""
+        started = time.perf_counter()
         params = {
             "crtfc_key": self.api_key,
             "page_no": page_no,
@@ -57,7 +68,9 @@ class DartClient:
         client = await self._get_client()
         resp = await client.get(f"{DART_BASE_URL}/list.json", params=params)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        self._log_timing("list.json", started, corp_code=corp_code, page_count=page_count)
+        return data
 
     async def get_all_disclosures(
         self,
@@ -67,6 +80,7 @@ class DartClient:
     ) -> list[dict]:
         """전체 공시 목록 조회 (corp_code 없이)"""
         from datetime import datetime, timedelta
+        started = time.perf_counter()
 
         if not bgn_de:
             bgn_de = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
@@ -83,12 +97,14 @@ class DartClient:
         resp = await client.get(f"{DART_BASE_URL}/list.json", params=params)
         resp.raise_for_status()
         data = resp.json()
+        self._log_timing("list.json", started, page_count=page_count, mode="all")
         if data.get("status") != "000":
             return []
         return data.get("list", [])
 
     async def get_document_text(self, rcept_no: str) -> str:
         """공시 본문을 가져와 텍스트로 반환 (ZIP → XML → 텍스트)"""
+        started = time.perf_counter()
         params = {
             "crtfc_key": self.api_key,
             "rcept_no": rcept_no,
@@ -127,7 +143,9 @@ class DartClient:
             return ""
 
         # 핵심 부분만 추출 (너무 길면 잘라냄)
-        return self._truncate_smart(full_text, MAX_CONTENT_LENGTH)
+        result = self._truncate_smart(full_text, MAX_CONTENT_LENGTH)
+        self._log_timing("document.xml", started, rcept_no=rcept_no, chars=len(result))
+        return result
 
     @staticmethod
     def _extract_text_from_xml(raw: bytes) -> str:
@@ -183,6 +201,7 @@ class DartClient:
 
     async def get_company_info(self, corp_code: str) -> dict:
         """기업 개황 조회"""
+        started = time.perf_counter()
         params = {
             "crtfc_key": self.api_key,
             "corp_code": corp_code,
@@ -190,12 +209,15 @@ class DartClient:
         client = await self._get_client()
         resp = await client.get(f"{DART_BASE_URL}/company.json", params=params)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        self._log_timing("company.json", started, corp_code=corp_code)
+        return data
 
     async def get_financial_statements(
         self, corp_code: str, bsns_year: str, reprt_code: str = "11011",
     ) -> dict:
         """단일회사 주요계정 조회 (재무제표)"""
+        started = time.perf_counter()
         params = {
             "crtfc_key": self.api_key,
             "corp_code": corp_code,
@@ -205,12 +227,15 @@ class DartClient:
         client = await self._get_client()
         resp = await client.get(f"{DART_BASE_URL}/fnlttSinglAcnt.json", params=params)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        self._log_timing("fnlttSinglAcnt.json", started, corp_code=corp_code, year=bsns_year)
+        return data
 
     async def get_dividends(
         self, corp_code: str, bsns_year: str, reprt_code: str = "11011",
     ) -> dict:
         """배당에 관한 사항 조회"""
+        started = time.perf_counter()
         params = {
             "crtfc_key": self.api_key,
             "corp_code": corp_code,
@@ -220,12 +245,15 @@ class DartClient:
         client = await self._get_client()
         resp = await client.get(f"{DART_BASE_URL}/alotMatter.json", params=params)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        self._log_timing("alotMatter.json", started, corp_code=corp_code, year=bsns_year)
+        return data
 
     async def get_major_shareholders(
         self, corp_code: str, bsns_year: str, reprt_code: str = "11011",
     ) -> dict:
         """최대주주 현황 조회"""
+        started = time.perf_counter()
         params = {
             "crtfc_key": self.api_key,
             "corp_code": corp_code,
@@ -235,4 +263,6 @@ class DartClient:
         client = await self._get_client()
         resp = await client.get(f"{DART_BASE_URL}/hyslrSttus.json", params=params)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        self._log_timing("hyslrSttus.json", started, corp_code=corp_code, year=bsns_year)
+        return data

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { getCompanySummary } from "./data";
 
 interface Props {
   params: Promise<{ corp_code: string }>;
@@ -10,12 +9,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { corp_code } = await params;
 
   try {
-    const res = await fetch(`${API_BASE}/api/company/${corp_code}/summary`, {
-      next: { revalidate: 86400 },
-    });
-    if (!res.ok) return { title: "기업 정보" };
-
-    const data = await res.json();
+    const data = await getCompanySummary(corp_code);
+    if (!data) return { title: "기업 정보" };
     const name = data.company?.corp_name ?? corp_code;
 
     return {

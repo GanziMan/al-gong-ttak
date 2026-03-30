@@ -11,19 +11,21 @@ const StockChart = dynamic(() => import("@/components/stock-chart-inner"), {
 
 interface StockPriceChartProps {
   corpCode: string;
+  initialPrices?: StockPriceDay[];
 }
 
-export function StockPriceChart({ corpCode }: StockPriceChartProps) {
-  const [prices, setPrices] = useState<StockPriceDay[]>([]);
-  const [loading, setLoading] = useState(true);
+export function StockPriceChart({ corpCode, initialPrices = [] }: StockPriceChartProps) {
+  const [prices, setPrices] = useState<StockPriceDay[]>(initialPrices);
+  const [loading, setLoading] = useState(initialPrices.length === 0);
 
   useEffect(() => {
+    if (initialPrices.length > 0) return;
     api
       .getStockPrices(corpCode, 30)
       .then((d) => setPrices(d.prices.slice().reverse()))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [corpCode]);
+  }, [corpCode, initialPrices]);
 
   if (loading) {
     return <div className="glass-card rounded-2xl h-52 animate-pulse" />;
