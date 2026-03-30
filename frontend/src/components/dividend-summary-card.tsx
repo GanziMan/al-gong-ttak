@@ -64,7 +64,7 @@ export function DividendSummaryCard({ event, corpName, stockCode }: DividendSumm
         </div>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300">
-            {statusLabel === "예상" ? statusLabel : "확인 필요"}
+            {statusLabel === "미정" ? "확인 필요" : statusLabel}
           </span>
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${change.className}`}>
             {change.label}
@@ -96,7 +96,40 @@ export function DividendSummaryCard({ event, corpName, stockCode }: DividendSumm
         {typeof event.yield_pct === "number" && <span>배당수익률 {event.yield_pct}%</span>}
         {typeof event.payout_pct === "number" && <span>배당성향 {event.payout_pct}%</span>}
         <span>기준 연도 {event.source_year}</span>
+        <span>{event.payout_cycle_label}</span>
+        {typeof event.payout_frequency_per_year === "number" && (
+          <span>최근 연 {event.payout_frequency_per_year}회</span>
+        )}
       </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-border/30 bg-background/60 px-3 py-3">
+          <p className="text-[11px] text-muted-foreground/60">최근 확정 기준일</p>
+          <p className="text-[15px] font-semibold text-foreground mt-1">
+            {event.last_confirmed_record_date ? formatDate(event.last_confirmed_record_date) : "확인된 데이터 없음"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border/30 bg-background/60 px-3 py-3">
+          <p className="text-[11px] text-muted-foreground/60">작년 기준일</p>
+          <p className="text-[15px] font-semibold text-foreground mt-1">
+            {event.previous_year_record_date ? formatDate(event.previous_year_record_date) : "확인된 데이터 없음"}
+          </p>
+        </div>
+      </div>
+
+      {event.record_date_history.length > 0 && (
+        <div className="mt-4 rounded-xl border border-border/30 bg-background/60 px-3 py-3">
+          <p className="text-[11px] text-muted-foreground/60 mb-2">최근 배당 기준일 이력</p>
+          <div className="space-y-1.5">
+            {event.record_date_history.slice(0, 3).map((item) => (
+              <div key={`${item.year}-${item.record_date}`} className="flex items-center justify-between gap-3 text-[12px]">
+                <span className="text-foreground/80">{item.year}</span>
+                <span className="font-medium text-foreground">{formatDate(item.record_date)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <p className="text-[11px] text-muted-foreground/60 mt-3">{event.note}</p>
     </div>

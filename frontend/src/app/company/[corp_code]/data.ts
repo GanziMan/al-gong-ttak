@@ -48,6 +48,16 @@ export const getCompanyDividendCalendar = cache(async (corpCode: string) =>
       change_vs_prev_year: "increase" | "flat" | "decrease" | "no_dividend" | "new" | "unknown";
       source_year: string;
       reference_date: string;
+      last_confirmed_record_date: string;
+      previous_year_record_date: string;
+      record_date_history: Array<{
+        record_date: string;
+        year: string;
+        report_nm: string;
+        rcept_dt: string;
+      }>;
+      payout_frequency_per_year: number | null;
+      payout_cycle_label: string;
       note: string;
     } | null;
   }>(`/api/dividends/calendar/${corpCode}?v=${DIVIDEND_CACHE_VERSION}`, 300)

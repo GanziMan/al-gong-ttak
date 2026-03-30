@@ -46,6 +46,8 @@ DIVIDEND_RECORD_DATE_LABELS = (
     "기준일",
 )
 
+RECENT_DIVIDEND_HISTORY_YEARS = 3
+
 
 def _is_cache_fresh(fetched_at: str) -> bool:
     try:
@@ -233,9 +235,19 @@ async def _find_dividend_record_date(
     dart_client: DartClient,
     corp_code: str,
 ) -> str | None:
+    history = await _find_dividend_record_date_history(dart_client, corp_code)
+    if not history:
+        return None
+    return history[0]["record_date"]
+
+
+async def _find_dividend_record_date_history(
+    dart_client: DartClient,
+    corp_code: str,
+) -> list[dict]:
     async def _load() -> str | None:
         end = datetime.now().strftime("%Y%m%d")
-        start = (datetime.now() - timedelta(days=400)).strftime("%Y%m%d")
+        start = (datetime.now() - timedelta(days=900)).strftime("%Y%m%d")
         data = await dart_client.get_disclosure_list(
             corp_code=corp_code,
             bgn_de=start,
@@ -250,23 +262,64 @@ async def _find_dividend_record_date(
             key=lambda item: item.get("rcept_dt", ""),
             reverse=True,
         )
-        candidates = []
+        candidates: list[dict] = []
         for item in disclosures:
             report_name = re.sub(r"\s+", "", str(item.get("report_nm", "")))
             if any(keyword in report_name for keyword in DIVIDEND_RECORD_DATE_KEYWORDS):
                 candidates.append(item)
 
-        for item in candidates[:8]:
+        results: list[dict] = []
+        seen_dates: set[str] = set()
+
+        for item in candidates[:12]:
             rcept_no = str(item.get("rcept_no", "")).strip()
             if not rcept_no:
                 continue
             text = await dart_client.get_document_text(rcept_no)
             record_date = _extract_record_date_from_text(text)
             if record_date:
-                return record_date
-        return None
+                dedupe_key = f"{record_date}:{rcept_no}"
+                if dedupe_key in seen_dates:
+                    continue
+                seen_dates.add(dedupe_key)
+                results.append({
+                    "record_date": record_date,
+                    "year": record_date[:4],
+                    "report_nm": str(item.get("report_nm", "")).strip(),
+                    "rcept_dt": str(item.get("rcept_dt", "")).strip(),
+                })
 
-    return await get_or_set(f"dividend:record-date:{corp_code}", 21600, _load)
+        results.sort(key=lambda item: item["record_date"], reverse=True)
+        return results
+
+    return await get_or_set(f"dividend:record-date-history:{corp_code}", 21600, _load)
+
+
+def _estimate_payout_frequency(record_date_history: list[dict]) -> tuple[int | None, str]:
+    if not record_date_history:
+        return None, "확인된 이력 부족"
+
+    counts_by_year: dict[str, int] = {}
+    current_year = datetime.now().year
+    for item in record_date_history:
+        year = item.get("year", "")
+        if not year:
+            continue
+        if int(year) < current_year - RECENT_DIVIDEND_HISTORY_YEARS:
+            continue
+        counts_by_year[year] = counts_by_year.get(year, 0) + 1
+
+    if not counts_by_year:
+        return None, "확인된 이력 부족"
+
+    frequency = max(counts_by_year.values())
+    if frequency >= 4:
+        return frequency, "분기배당 추정"
+    if frequency == 2:
+        return frequency, "반기배당 추정"
+    if frequency == 1:
+        return frequency, "연 1회 배당 추정"
+    return frequency, "비정기 배당 추정"
 
 
 def _build_dividend_year_summary(year_data: dict) -> dict | None:
@@ -359,11 +412,26 @@ async def build_dividend_calendar_event_with_record_date(
     if not event:
         return None
 
-    record_date = await _find_dividend_record_date(dart_client, corp_code)
-    if record_date:
+    record_date_history = await _find_dividend_record_date_history(dart_client, corp_code)
+    if record_date_history:
+        record_date = record_date_history[0]["record_date"]
         event["status"] = "confirmed"
         event["next_event_date"] = record_date
         event["note"] = "배당 관련 공시 본문에서 확인한 배당기준일입니다."
+        event["last_confirmed_record_date"] = record_date
+        current_year = str(datetime.now().year - 1)
+        previous_year = next((item["record_date"] for item in record_date_history if item["year"] == current_year), "")
+        event["previous_year_record_date"] = previous_year
+        event["record_date_history"] = record_date_history[:6]
+        frequency, cycle_label = _estimate_payout_frequency(record_date_history)
+        event["payout_frequency_per_year"] = frequency
+        event["payout_cycle_label"] = cycle_label
+    else:
+        event["last_confirmed_record_date"] = ""
+        event["previous_year_record_date"] = ""
+        event["record_date_history"] = []
+        event["payout_frequency_per_year"] = None
+        event["payout_cycle_label"] = "확인된 이력 부족"
 
     return event
 
